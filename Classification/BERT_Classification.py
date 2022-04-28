@@ -25,8 +25,8 @@ MAX_SEQ_LEN = 128
 PAD_INDEX = tokenizer.convert_tokens_to_ids(tokenizer.pad_token)
 UNK_INDEX = tokenizer.convert_tokens_to_ids(tokenizer.unk_token)
 
-source_folder = 'dataset/News'
-destination_folder = 'dataset/News'
+source_folder = '../dataset/News'
+destination_folder = '../dataset/News'
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 print(device)
 
