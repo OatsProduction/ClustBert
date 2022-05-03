@@ -1,7 +1,7 @@
 import string
 
 import torch
-from transformers import BertTokenizer, BertForSequenceClassification
+from transformers import BertTokenizer, BertModel
 import torch.nn as nn
 
 
@@ -10,19 +10,12 @@ class ClustBERT(nn.Module):
     def __init__(self):
         super(ClustBERT, self).__init__()
 
-        options_name = "bert-base-uncased"
-        self.encoder = BertForSequenceClassification.from_pretrained(options_name)
+        self.encoder = BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
-    def forward(self, text, label):
-        print(self.encoder(text))
-        loss, text_fea = self.encoder(text, labels=label)[:2]
-
-        return loss, text_fea
-
     def get_sentence_vector_from_cls(self, text):
-        ids = self.tokenizer.encode(text)
-        return self.tokenizer.convert_ids_to_tokens(ids)
+        return torch.LongTensor(self.tokenizer.encode(text))
+        # return self.tokenizer.convert_ids_to_tokens(ids)
 
 
 def preload(file: string) -> []:
@@ -37,6 +30,19 @@ def preload(file: string) -> []:
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 result = preload('../dataset/News/train.csv')
 model = ClustBERT().to(device)
+model.encoder.eval()
 
-print(model.get_sentence_vector_from_cls("This is cool"))
+tokens = model.get_sentence_vector_from_cls("This is cool")
+tokens = tokens.to(device)
+tokens = tokens.unsqueeze(0)
 
+with torch.no_grad():
+    out = model.encoder(input_ids=tokens)
+
+# the output is a tuple
+print(type(out))
+# the tuple contains three elements as explained above)
+print(out)
+# we only want the hidden_states
+hidden_states = out[2]
+print(len(hidden_states))
