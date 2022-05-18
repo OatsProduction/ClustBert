@@ -1,18 +1,55 @@
-import string
-
 import torch
+import torch.nn as nn
 from datasets import Dataset
 from sklearn.cluster import KMeans
-from transformers import BertTokenizer, BertModel, TrainingArguments, Trainer
-import torch.nn as nn
+from torch.utils.data import DataLoader
+from tqdm.auto import tqdm
+from transformers import BertTokenizer, BertModel, AdamW, get_scheduler, DataCollatorWithPadding
+from transformers.modeling_outputs import TokenClassifierOutput
+from training import DataSetUtils
 
 
 class ClustBERT(nn.Module):
 
-    def __init__(self):
+    def __init__(self, k: int):
         super(ClustBERT, self).__init__()
-        self.model = BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
+        self.model = BertModel.from_pretrained("bert-base-cased", output_hidden_states=True)
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+
+        self.dropout = nn.Dropout(0.1)
+        self.classifier = nn.Linear(768, k)  # load and initialize weights
+        self.clustering = KMeans(k)
+
+    def forward(self, input_ids=None, attention_mask=None, labels=None):
+        # Extract outputs from the body
+        outputs = self.model(input_ids=input_ids, attention_mask=attention_mask)
+
+        # Add custom layers
+        sequence_output = self.dropout(outputs[0])  # outputs[0]=last hidden state
+
+        logits = self.classifier(sequence_output[:, 0, :].view(-1, 768))  # calculate losses
+
+        loss = None
+        if labels is not None:
+            loss_fct = nn.CrossEntropyLoss()
+            loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+
+        return TokenClassifierOutput(loss=loss, logits=logits, hidden_states=outputs.hidden_states,
+                                     attentions=outputs.attentions)
+
+    def cluster_and_generate(self, data: Dataset) -> Dataset:
+        print("Start Step 1 --- Clustering")
+
+        test_data = data["new_sentence"]
+        sentence_embedding = clust_bert.get_sentence_vectors_with_token_average(test_data)
+        X = [sentence.cpu().detach().numpy() for sentence in sentence_embedding]
+        pseudo_labels = self.clustering.fit_predict(X)
+
+        data = data.remove_columns(["label"])
+        data = data.map(lambda example, idx: {"label": pseudo_labels[idx]}, with_indices=True)
+
+        print("Finished Step 1 --- Clustering " + str(data))
+        return data
 
     def get_sentence_vectors_with_token_average(self, texts: list):
         return [self.get_sentence_vector_with_token_average(text) for text in texts]
@@ -30,34 +67,40 @@ class ClustBERT(nn.Module):
         return torch.mean(hidden_states[-1], dim=1).squeeze()
 
 
-def preload(file: string) -> []:
-    returnList = []
-
-    with open(file, 'r', encoding='utf-8') as file:
-        data = file.read().rstrip()
-        returnList.append(data)
-    return returnList
-
+snli = DataSetUtils.get_snli_dataset()
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-clust_bert = ClustBERT().to(device)
+clust_bert = ClustBERT(3).to(device)
 clust_bert.model.eval()
 
-result = preload('../dataset/News/train.csv')
-test_data = ["This is cool", "believe me.", "Let's try Bert."]
-sentence_embedding = clust_bert.get_sentence_vectors_with_token_average(test_data)
-X = [sentence.cpu().detach().numpy() for sentence in sentence_embedding]
+dataset = clust_bert.cluster_and_generate(snli)
 
-k = 2
-k_means = KMeans(k)
-pseudo_labels = k_means.fit_predict(X)
+data_collator = DataCollatorWithPadding(tokenizer=clust_bert.tokenizer)
+train_dataloader = DataLoader(
+    dataset, shuffle=True, batch_size=8, collate_fn=data_collator
+)
 
-train_encodings = clust_bert.tokenizer(test_data, truncation=True, padding=True)
-my_dict = {"0": test_data, "1": ["Think about this."]}
-dataset = Dataset.from_dict(my_dict)
-print(dataset)
+optimizer = AdamW(clust_bert.model.parameters(), lr=3e-5)
+num_epochs = 3
+num_training_steps = num_epochs * len(train_dataloader)
+lr_scheduler = get_scheduler(
+    "linear",
+    optimizer=optimizer,
+    num_warmup_steps=0,
+    num_training_steps=num_training_steps,
+)
 
-training_args = TrainingArguments(output_dir="test_trainer")
-trainer = Trainer(model=clust_bert, args=training_args, train_dataset=dataset)
+progress_bar = tqdm(range(num_training_steps))
 
-trainer.train()
+clust_bert.model.train()
+for epoch in range(num_epochs):
+    for batch in train_dataloader:
+        batch = {k: v.to(device) for k, v in batch.items()}
+        outputs = clust_bert.model(**batch)
+        loss = outputs.loss
+        loss.backward()
+
+        optimizer.step()
+        lr_scheduler.step()
+        optimizer.zero_grad()
+        progress_bar.update(1)
