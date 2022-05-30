@@ -2,11 +2,10 @@ import torch
 import torch.nn as nn
 from datasets import Dataset
 from sklearn.cluster import KMeans
-from torch.utils.data import DataLoader
-from tqdm.auto import tqdm
-from transformers import BertTokenizer, BertModel, AdamW, get_scheduler, DataCollatorWithPadding
+from transformers import BertTokenizer, BertModel
 from transformers.modeling_outputs import TokenClassifierOutput
-from training import DataSetUtils
+
+from training import DataSetUtils, PlainPytorchTraining
 
 
 class ClustBERT(nn.Module):
@@ -83,32 +82,4 @@ clust_bert.model.eval()
 dataset = clust_bert.preprocess_datasets(snli)
 dataset = clust_bert.cluster_and_generate(dataset)
 
-data_collator = DataCollatorWithPadding(tokenizer=clust_bert.tokenizer)
-train_dataloader = DataLoader(
-    dataset, shuffle=True, batch_size=8, collate_fn=data_collator
-)
-
-optimizer = AdamW(clust_bert.model.parameters(), lr=3e-5)
-num_epochs = 3
-num_training_steps = num_epochs * len(train_dataloader)
-lr_scheduler = get_scheduler(
-    "linear",
-    optimizer=optimizer,
-    num_warmup_steps=0,
-    num_training_steps=num_training_steps,
-)
-
-progress_bar = tqdm(range(num_training_steps))
-
-clust_bert.model.train()
-for epoch in range(num_epochs):
-    for batch in train_dataloader:
-        batch = {k: v.to(device) for k, v in batch.items()}
-        outputs = clust_bert(**batch)
-        loss = outputs.loss
-        loss.backward()
-
-        optimizer.step()
-        lr_scheduler.step()
-        optimizer.zero_grad()
-        progress_bar.update(1)
+PlainPytorchTraining.start_training(clust_bert, dataset)
