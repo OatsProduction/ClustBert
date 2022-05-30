@@ -1,3 +1,5 @@
+import pickle
+
 import torch
 import torch.nn as nn
 from datasets import Dataset
@@ -55,7 +57,7 @@ class ClustBERT(nn.Module):
         data = data.remove_columns(["label"])
         data = data.map(lambda example, idx: {"labels": pseudo_labels[idx]}, with_indices=True)
 
-        print("\n Finished Step 1 --- Clustering " + str(data) + "\n")
+        print("\n Finished Step 1 --- Clustering ")
         return data
 
     def get_sentence_vectors_with_token_average(self, texts: list):
@@ -83,3 +85,10 @@ dataset = clust_bert.preprocess_datasets(snli)
 dataset = clust_bert.cluster_and_generate(dataset)
 
 PlainPytorchTraining.start_training(clust_bert, dataset)
+safe = False
+
+if safe:
+    filename = 'clust_bert.sav'
+    pickle.dump(clust_bert, open(filename, 'wb'))
+
+    loaded_model = pickle.load(open(filename, 'rb'))

@@ -56,11 +56,9 @@ def eval_loop(clust_bert, device, eval_dataloader: DataLoader):
     avg_val_loss = metric.compute()["accuracy"]
 
 
-def plot(num_epochs: int):
+def plot():
     pd.set_option('precision', 2)
     df_stats = pd.DataFrame(data=training_stats)
-    # df_stats = df_stats.set_index('epoch')
-    df_stats
 
     sns.set(style='darkgrid')
     sns.set(font_scale=1.5)
@@ -89,6 +87,7 @@ def start_training(clust_bert, dataset: Dataset):
     num_epochs = 8
 
     for epoch in range(num_epochs):
+        print("Loop in Epoch: " + str(epoch))
         train_loop(clust_bert, device, train_dataloader)
         eval_loop(clust_bert, device, eval_dataloader)
 
@@ -101,4 +100,4 @@ def start_training(clust_bert, dataset: Dataset):
             }
         )
 
-    plot(num_epochs)
+    plot()
