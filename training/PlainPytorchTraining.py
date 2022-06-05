@@ -99,5 +99,3 @@ def start_training(clust_bert, dataset: Dataset):
                 'Valid. Loss': avg_val_loss,
             }
         )
-
-    plot()

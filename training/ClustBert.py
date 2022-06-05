@@ -1,3 +1,5 @@
+from datetime import datetime
+import os
 import pickle
 
 import torch
@@ -7,20 +9,20 @@ from sklearn.cluster import KMeans
 from transformers import BertTokenizer, BertModel
 from transformers.modeling_outputs import TokenClassifierOutput
 
-from training import DataSetUtils, PlainPytorchTraining
-
-
 class ClustBERT(nn.Module):
 
-    def __init__(self, k: int):
+    def __init__(self, k: int, device):
         super(ClustBERT, self).__init__()
         self.model = BertModel.from_pretrained("bert-base-cased", output_hidden_states=True)
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
+        self.device = device
 
         self.num_labels = k
         self.dropout = nn.Dropout(0.1)
         self.classifier = nn.Linear(768, self.num_labels)  # load and initialize weights
         self.clustering = KMeans(k)
+
+        self.to(device)
 
     def forward(self, input_ids=None, token_type_ids=None, attention_mask=None, labels=None):
         # Extract outputs from the body
@@ -49,8 +51,9 @@ class ClustBERT(nn.Module):
 
     def cluster_and_generate(self, data: Dataset) -> Dataset:
         print("Start Step 1 --- Clustering \n")
+        self.model.eval()
 
-        sentence_embedding = clust_bert.get_sentence_vectors_with_token_average(data)
+        sentence_embedding = self.get_sentence_vectors_with_token_average(data)
         X = [sentence.cpu().detach().numpy() for sentence in sentence_embedding]
         pseudo_labels = self.clustering.fit_predict(X)
 
@@ -66,29 +69,21 @@ class ClustBERT(nn.Module):
 
     def get_sentence_vector_with_token_average(self, tokens, token_type_ids=None, attention_mask=None):
         with torch.no_grad():
-            out = self.model(input_ids=tokens.unsqueeze(0).to(device),
-                             token_type_ids=token_type_ids.unsqueeze(0).to(device),
-                             attention_mask=attention_mask.unsqueeze(0).to(device))
+            out = self.model(input_ids=tokens.unsqueeze(0).to(self.device),
+                             token_type_ids=token_type_ids.unsqueeze(0).to(self.device),
+                             attention_mask=attention_mask.unsqueeze(0).to(self.device))
 
         # we only want the hidden_states
         hidden_states = out[2]
         return torch.mean(hidden_states[-1], dim=1).squeeze()
 
+    def save(self):
+        date = str(datetime.now())
+        filename = 'clust_bert_' + date + ".model"
+        if not os.path.exists("output"):
+            os.mkdir("output")
+        pickle.dump(self, open("output/" + filename, 'wb'))
 
-snli = DataSetUtils.get_snli_dataset()
-
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-clust_bert = ClustBERT(3).to(device)
-clust_bert.model.eval()
-
-dataset = clust_bert.preprocess_datasets(snli)
-dataset = clust_bert.cluster_and_generate(dataset)
-
-PlainPytorchTraining.start_training(clust_bert, dataset)
-safe = False
-
-if safe:
-    filename = 'clust_bert.sav'
-    pickle.dump(clust_bert, open(filename, 'wb'))
-
-    loaded_model = pickle.load(open(filename, 'rb'))
+    @staticmethod
+    def load(file_name):
+        return pickle.load(open(file_name, 'rb'))
