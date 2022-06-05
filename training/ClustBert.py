@@ -1,6 +1,7 @@
-from datetime import datetime
 import os
 import pickle
+from datetime import datetime
+from time import time
 
 import torch
 import torch.nn as nn
@@ -8,6 +9,7 @@ from datasets import Dataset
 from sklearn.cluster import KMeans
 from transformers import BertTokenizer, BertModel
 from transformers.modeling_outputs import TokenClassifierOutput
+
 
 class ClustBERT(nn.Module):
 
@@ -41,16 +43,18 @@ class ClustBERT(nn.Module):
                                      attentions=outputs.attentions)
 
     def preprocess_datasets(self, data_set: Dataset) -> Dataset:
+        print("Preprocess the data")
         data_set = data_set.map(
             lambda examples: self.tokenizer(examples['new_sentence'], padding=True, truncation=True),
             batched=True)
 
         data_set.set_format("torch", columns=['input_ids', 'token_type_ids', 'attention_mask', 'label'])
-
+        print("Finsihed the Preprocess the data")
         return data_set
 
     def cluster_and_generate(self, data: Dataset) -> Dataset:
-        print("Start Step 1 --- Clustering \n")
+        print("Start Step 1 --- Clustering")
+        t0 = time()
         self.model.eval()
 
         sentence_embedding = self.get_sentence_vectors_with_token_average(data)
@@ -60,7 +64,7 @@ class ClustBERT(nn.Module):
         data = data.remove_columns(["label"])
         data = data.map(lambda example, idx: {"labels": pseudo_labels[idx]}, with_indices=True)
 
-        print("\n Finished Step 1 --- Clustering ")
+        print("Finished Step 1 --- Clustering in %0.3fs" % (time() - t0))
         return data
 
     def get_sentence_vectors_with_token_average(self, texts: list):

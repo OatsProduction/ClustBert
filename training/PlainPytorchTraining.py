@@ -1,10 +1,10 @@
+import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 import torch
-from datasets import load_metric, tqdm, Dataset
+from datasets import load_metric, Dataset
 from torch.utils.data import DataLoader
 from transformers import AdamW, get_scheduler, DataCollatorWithPadding
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 training_stats = []
 avg_train_loss = 0
@@ -76,8 +76,7 @@ def plot():
     plt.show()
 
 
-def start_training(clust_bert, dataset: Dataset):
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+def start_training(clust_bert, dataset: Dataset, device):
     data_collator = DataCollatorWithPadding(tokenizer=clust_bert.tokenizer)
     train_dataloader = DataLoader(
         dataset, shuffle=True, batch_size=8, collate_fn=data_collator
