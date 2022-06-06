@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import torch
+import wandb
 from datasets import load_metric, Dataset
 from torch.utils.data import DataLoader
 from transformers import AdamW, get_scheduler, DataCollatorWithPadding
@@ -90,11 +91,5 @@ def start_training(clust_bert, dataset: Dataset, device):
         train_loop(clust_bert, device, train_dataloader)
         eval_loop(clust_bert, device, eval_dataloader)
 
-        training_stats.append(
-            {
-                'epoch': epoch + 1,
-                'Training Loss': avg_train_loss,
-                'Valid. Accur.': avg_val_accuracy,
-                'Valid. Loss': avg_val_loss,
-            }
-        )
+        wandb.log({"loss": avg_train_loss})
+        wandb.log({"validation": avg_val_loss})

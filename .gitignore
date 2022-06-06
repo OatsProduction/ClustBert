@@ -133,3 +133,4 @@ dmypy.json
 
 #output folder
 \output
+\wandb
