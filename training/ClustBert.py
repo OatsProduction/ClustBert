@@ -48,7 +48,7 @@ class ClustBERT(nn.Module):
             lambda examples: self.tokenizer(examples['new_sentence'], padding=True, truncation=True),
             batched=True)
 
-        data_set.set_format("torch", columns=['input_ids', 'token_type_ids', 'attention_mask', 'label'])
+        data_set.set_format("torch", columns=['input_ids', 'token_type_ids', 'attention_mask', 'labels'])
         print("Finsihed the Preprocess the data")
         return data_set
 
@@ -61,7 +61,6 @@ class ClustBERT(nn.Module):
         X = [sentence.cpu().detach().numpy() for sentence in sentence_embedding]
         pseudo_labels = self.clustering.fit_predict(X)
 
-        data = data.remove_columns(["label"])
         data = data.map(lambda example, idx: {"labels": pseudo_labels[idx]}, with_indices=True)
 
         print("Finished Step 1 --- Clustering in %0.3fs" % (time() - t0))

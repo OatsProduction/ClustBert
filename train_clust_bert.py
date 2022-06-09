@@ -17,17 +17,20 @@ cuda_index = "0" if args.cuda is None else str(args.cuda)
 device = torch.device('cuda:' + cuda_index if torch.cuda.is_available() else 'cpu')
 print("Using device: " + str(device))
 
-snli = DataSetUtils.get_snli_dataset()
+train, valid = DataSetUtils.get_snli_dataset()
 if args.data is not None:
-    snli = snli.select(range(1, args.data))
+    train = train.select(range(1, args.data))
+    valid = valid.select(range(1, args.data))
+
+clust_bert = ClustBERT(3, device)
+train = clust_bert.preprocess_datasets(train)
+valid = clust_bert.preprocess_datasets(valid)
 
 wandb.init(project="test-project", entity="clustbert")
-clust_bert = ClustBERT(3, device)
 wandb.watch(clust_bert)
-dataset = clust_bert.preprocess_datasets(snli)
 
-generated_dataset = clust_bert.cluster_and_generate(dataset)
-PlainPytorchTraining.start_training(clust_bert, generated_dataset, device)
+generated_dataset = clust_bert.cluster_and_generate(train)
+PlainPytorchTraining.start_training(clust_bert, generated_dataset, valid, device)
 
 if args.save:
     clust_bert.save()

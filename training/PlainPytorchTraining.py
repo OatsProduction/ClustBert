@@ -77,12 +77,12 @@ def plot():
     plt.show()
 
 
-def start_training(clust_bert, dataset: Dataset, device):
+def start_training(clust_bert, train: Dataset, validation: Dataset, device):
     data_collator = DataCollatorWithPadding(tokenizer=clust_bert.tokenizer)
     train_dataloader = DataLoader(
-        dataset, shuffle=True, batch_size=8, collate_fn=data_collator
+        train, shuffle=True, batch_size=8, collate_fn=data_collator
     )
-    eval_dataloader = DataLoader(dataset, batch_size=8)
+    eval_dataloader = DataLoader(validation, batch_size=8, collate_fn=data_collator)
 
     num_epochs = 8
 
