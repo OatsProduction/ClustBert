@@ -4,6 +4,7 @@ import seaborn as sns
 import torch
 import wandb
 from datasets import load_metric, Dataset
+from sklearn.metrics import normalized_mutual_info_score
 from torch.utils.data import DataLoader
 from transformers import AdamW, get_scheduler, DataCollatorWithPadding
 
@@ -79,17 +80,21 @@ def plot():
 
 def start_training(clust_bert, train: Dataset, validation: Dataset, device):
     data_collator = DataCollatorWithPadding(tokenizer=clust_bert.tokenizer)
-    train_dataloader = DataLoader(
-        train, shuffle=True, batch_size=8, collate_fn=data_collator
-    )
     eval_dataloader = DataLoader(validation, batch_size=8, collate_fn=data_collator)
 
-    num_epochs = 8
+    num_epochs = 16
 
     for epoch in range(num_epochs):
         print("Loop in Epoch: " + str(epoch))
+        pseudo_label_data = clust_bert.cluster_and_generate(train)
+        nmi = normalized_mutual_info_score(train["labels"], pseudo_label_data["labels"])
+
+        train_dataloader = DataLoader(
+            pseudo_label_data, shuffle=True, batch_size=8, collate_fn=data_collator
+        )
         train_loop(clust_bert, device, train_dataloader)
         eval_loop(clust_bert, device, eval_dataloader)
 
+        wandb.log({"NMI": nmi})
         wandb.log({"loss": avg_train_loss})
         wandb.log({"validation": avg_val_loss})

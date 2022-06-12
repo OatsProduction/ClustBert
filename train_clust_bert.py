@@ -29,8 +29,7 @@ valid = clust_bert.preprocess_datasets(valid)
 wandb.init(project="test-project", entity="clustbert")
 wandb.watch(clust_bert)
 
-generated_dataset = clust_bert.cluster_and_generate(train)
-PlainPytorchTraining.start_training(clust_bert, generated_dataset, valid, device)
+PlainPytorchTraining.start_training(clust_bert, train, valid, device)
 
 if args.save:
     clust_bert.save()
