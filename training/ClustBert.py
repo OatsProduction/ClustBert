@@ -88,5 +88,5 @@ class ClustBERT(nn.Module):
         pickle.dump(self, open("output/" + filename, 'wb'))
 
     @staticmethod
-    def load(file_name):
+    def load(file_name: str):
         return pickle.load(open(file_name, 'rb'))
