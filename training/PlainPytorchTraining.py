@@ -15,7 +15,7 @@ avg_val_loss = 0
 
 
 def train_loop(clust_bert, device, train_dataloader: DataLoader):
-    optimizer = AdamW(clust_bert.model.parameters(), lr=3e-5)
+    optimizer = AdamW(clust_bert.parameters(), lr=3e-5)
     lr_scheduler = get_scheduler(
         "linear",
         optimizer=optimizer,
@@ -23,7 +23,7 @@ def train_loop(clust_bert, device, train_dataloader: DataLoader):
         num_training_steps=len(train_dataloader)
     )
 
-    clust_bert.model.train()
+    clust_bert.train()
     total_train_loss = 0
 
     for batch in train_dataloader:
@@ -44,7 +44,7 @@ def train_loop(clust_bert, device, train_dataloader: DataLoader):
 def eval_loop(clust_bert, device, eval_dataloader: DataLoader):
     global avg_val_loss
     metric = load_metric("accuracy")
-    clust_bert.model.eval()
+    clust_bert.eval()
     for batch in eval_dataloader:
         batch = {k: v.to(device) for k, v in batch.items()}
         with torch.no_grad():
@@ -95,6 +95,4 @@ def start_training(clust_bert, train: Dataset, validation: Dataset, device):
         train_loop(clust_bert, device, train_dataloader)
         eval_loop(clust_bert, device, eval_dataloader)
 
-        wandb.log({"NMI": nmi})
-        wandb.log({"loss": avg_train_loss})
-        wandb.log({"validation": avg_val_loss})
+        wandb.log({"NMI": nmi, "loss": avg_train_loss, "validation": avg_val_loss})

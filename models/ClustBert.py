@@ -49,7 +49,7 @@ class ClustBERT(nn.Module):
             batched=True)
 
         data_set.set_format("torch", columns=['input_ids', 'token_type_ids', 'attention_mask', 'labels'])
-        print("Finsihed the Preprocess the data")
+        print("Finished the Preprocess the data")
         return data_set
 
     def cluster_and_generate(self, data: Dataset) -> Dataset:

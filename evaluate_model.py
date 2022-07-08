@@ -2,7 +2,7 @@ import argparse
 
 import senteval
 
-from training.ClustBert import ClustBERT
+from models.ClustBert import ClustBERT
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model", type=str, help="define the path to model to load")

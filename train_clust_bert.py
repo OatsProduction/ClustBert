@@ -3,8 +3,8 @@ import argparse
 import torch
 import wandb
 
+from models.ClustBert import ClustBERT
 from training import DataSetUtils, PlainPytorchTraining
-from training.ClustBert import ClustBERT
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--cuda', type=int, help='the index of the cuda GPU. Default is 0')
@@ -23,8 +23,8 @@ if args.data is not None:
     valid = valid.select(range(1, args.data))
 
 clust_bert = ClustBERT(3, device)
-train = clust_bert.preprocess_datasets(train)
-valid = clust_bert.preprocess_datasets(valid)
+train = DataSetUtils.preprocess_datasets(clust_bert.tokenizer, train)
+valid = DataSetUtils.preprocess_datasets(clust_bert.tokenizer, valid)
 
 wandb.init(project="test-project", entity="clustbert")
 wandb.watch(clust_bert)

@@ -1,22 +1,17 @@
 # Libraries
 
 import matplotlib.pyplot as plt
-import pandas as pd
+import seaborn as sns
 import torch
-
-# Preliminaries
-from torchtext.data import Field, TabularDataset, BucketIterator, Iterator
-
 # Models
 import torch.nn as nn
-from transformers import BertTokenizer, BertForSequenceClassification
-
 # Training
 import torch.optim as optim
-
 # Evaluation
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-import seaborn as sns
+from sklearn.metrics import classification_report, confusion_matrix
+# Preliminaries
+from torchtext.data import Field, TabularDataset, BucketIterator, Iterator
+from transformers import BertTokenizer, BertForSequenceClassification
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
@@ -25,8 +20,8 @@ MAX_SEQ_LEN = 128
 PAD_INDEX = tokenizer.convert_tokens_to_ids(tokenizer.pad_token)
 UNK_INDEX = tokenizer.convert_tokens_to_ids(tokenizer.unk_token)
 
-source_folder = '../dataset/News'
-destination_folder = '../dataset/News'
+source_folder = 'dataset/News'
+destination_folder = 'dataset/News'
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 print(device)
 
@@ -223,7 +218,7 @@ def evaluate(model, test_loader):
             y_pred.extend(torch.argmax(output, 1).tolist())
             y_true.extend(labels.tolist())
 
-    print('Classification Report:')
+    print('examples Report:')
     print(classification_report(y_true, y_pred, labels=[1, 0], digits=4))
 
     cm = confusion_matrix(y_true, y_pred, labels=[1, 0])
