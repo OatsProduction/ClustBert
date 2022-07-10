@@ -24,7 +24,7 @@ if args.data is not None:
     valid = valid.select(range(1, args.data))
 
 model = BertModel.from_pretrained("bert-base-cased", output_hidden_states=True)
-bert = ClassifierTransformer(model, device)
+bert = ClassifierTransformer(model, 3, device)
 train = DataSetUtils.preprocess_datasets(bert.tokenizer, train)
 valid = DataSetUtils.preprocess_datasets(bert.tokenizer, valid)
 
@@ -34,7 +34,7 @@ wandb.watch(bert)
 data_collator = DataCollatorWithPadding(tokenizer=bert.tokenizer)
 train_dataloader = DataLoader(train, shuffle=True, batch_size=16, collate_fn=data_collator)
 eval_dataloader = DataLoader(valid, batch_size=16, collate_fn=data_collator)
-num_epochs = 14
+num_epochs = 15
 
 for epoch in range(num_epochs):
     print("Start Epoch: " + str(epoch))

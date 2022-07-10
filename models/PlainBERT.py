@@ -9,14 +9,15 @@ from transformers.modeling_outputs import TokenClassifierOutput
 
 class ClassifierTransformer(nn.Module):
 
-    def __init__(self, transformer, device):
+    def __init__(self, transformer, num_labels: int, device):
         super(ClassifierTransformer, self).__init__()
         self.model = transformer
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
         self.device = device
+        self.labels = num_labels
 
         self.dropout = nn.Dropout(0.1)
-        self.classifier = nn.Linear(768, 3)  # load and initialize weights
+        self.classifier = nn.Linear(768, self.labels)  # load and initialize weights
         self.to(device)
 
     def forward(self, input_ids=None, token_type_ids=None, attention_mask=None, labels=None):
@@ -30,7 +31,7 @@ class ClassifierTransformer(nn.Module):
         loss = None
         if labels is not None:
             loss_fct = nn.CrossEntropyLoss()
-            loss = loss_fct(logits.view(-1, 3), labels.view(-1))
+            loss = loss_fct(logits.view(-1, self.labels), labels.view(-1))
 
         return TokenClassifierOutput(loss=loss, logits=logits, hidden_states=outputs.hidden_states,
                                      attentions=outputs.attentions)

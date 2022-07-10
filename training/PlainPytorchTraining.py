@@ -11,11 +11,11 @@ from transformers import AdamW, get_scheduler, DataCollatorWithPadding
 training_stats = []
 avg_train_loss = 0
 avg_val_accuracy = 0
-avg_val_loss = 0
+accuracy = 0
 
 
-def train_loop(clust_bert, device, train_dataloader: DataLoader):
-    optimizer = AdamW(clust_bert.parameters(), lr=3e-5)
+def train_loop(model, device, train_dataloader: DataLoader):
+    optimizer = AdamW(model.parameters(), lr=3e-5)
     lr_scheduler = get_scheduler(
         "linear",
         optimizer=optimizer,
@@ -23,12 +23,12 @@ def train_loop(clust_bert, device, train_dataloader: DataLoader):
         num_training_steps=len(train_dataloader)
     )
 
-    clust_bert.train()
+    model.train()
     total_train_loss = 0
 
     for batch in train_dataloader:
         batch = {k: v.to(device) for k, v in batch.items()}
-        outputs = clust_bert(**batch)
+        outputs = model(**batch)
         loss = outputs.loss
         total_train_loss += loss.item()
         loss.backward()
@@ -41,21 +41,21 @@ def train_loop(clust_bert, device, train_dataloader: DataLoader):
     avg_train_loss = total_train_loss / len(train_dataloader)
 
 
-def eval_loop(clust_bert, device, eval_dataloader: DataLoader):
-    global avg_val_loss
+def eval_loop(model, device, eval_dataloader: DataLoader):
+    global accuracy
     metric = load_metric("accuracy")
-    clust_bert.eval()
+    model.eval()
     for batch in eval_dataloader:
         batch = {k: v.to(device) for k, v in batch.items()}
         with torch.no_grad():
-            outputs = clust_bert(**batch)
+            outputs = model(**batch)
 
         logits = outputs.logits
         predictions = torch.argmax(logits, dim=-1)
         metric.add_batch(predictions=predictions, references=batch["labels"])
 
-    global avg_val_loss
-    avg_val_loss = metric.compute()["accuracy"]
+    global accuracy
+    accuracy = metric.compute()["accuracy"]
 
 
 def plot():
@@ -95,4 +95,4 @@ def start_training(clust_bert, train: Dataset, validation: Dataset, device):
         train_loop(clust_bert, device, train_dataloader)
         eval_loop(clust_bert, device, eval_dataloader)
 
-        wandb.log({"NMI": nmi, "loss": avg_train_loss, "validation": avg_val_loss})
+        wandb.log({"NMI": nmi, "loss": avg_train_loss, "validation": accuracy})
