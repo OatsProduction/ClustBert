@@ -41,7 +41,7 @@ for epoch in range(num_epochs):
     PlainPytorchTraining.train_loop(bert, device, train_dataloader)
     PlainPytorchTraining.eval_loop(bert, device, eval_dataloader)
 
-    wandb.log({"loss": PlainPytorchTraining.avg_train_loss, "validation": PlainPytorchTraining.avg_val_loss})
+    wandb.log({"loss": PlainPytorchTraining.avg_train_loss, "validation": PlainPytorchTraining.accuracy})
 
 if args.save:
     bert.save()

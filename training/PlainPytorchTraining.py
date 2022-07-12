@@ -10,7 +10,6 @@ from transformers import AdamW, get_scheduler, DataCollatorWithPadding
 
 training_stats = []
 avg_train_loss = 0
-avg_val_accuracy = 0
 accuracy = 0
 
 
