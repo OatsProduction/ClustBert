@@ -34,7 +34,7 @@ wandb.watch(bert)
 data_collator = DataCollatorWithPadding(tokenizer=bert.tokenizer)
 train_dataloader = DataLoader(train, shuffle=True, batch_size=16, collate_fn=data_collator)
 eval_dataloader = DataLoader(valid, batch_size=16, collate_fn=data_collator)
-num_epochs = 15
+num_epochs = 11
 
 for epoch in range(num_epochs):
     print("Start Epoch: " + str(epoch))
