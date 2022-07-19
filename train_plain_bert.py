@@ -3,7 +3,7 @@ import argparse
 import torch
 import wandb
 from torch.utils.data import DataLoader
-from transformers import BertModel, DataCollatorWithPadding
+from transformers import DataCollatorWithPadding
 
 from models.PlainBERT import ClassifierTransformer
 from training import DataSetUtils, PlainPytorchTraining
@@ -23,8 +23,7 @@ if args.data is not None:
     train = train.select(range(1, args.data))
     valid = valid.select(range(1, args.data))
 
-model = BertModel.from_pretrained("bert-base-cased", output_hidden_states=True)
-bert = ClassifierTransformer(model, 3, device)
+bert = ClassifierTransformer("bert-base-cased", 3, device)
 train = DataSetUtils.preprocess_datasets(bert.tokenizer, train)
 valid = DataSetUtils.preprocess_datasets(bert.tokenizer, valid)
 

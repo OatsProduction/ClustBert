@@ -3,16 +3,16 @@ import pickle
 from datetime import datetime
 
 import torch.nn as nn
-from transformers import BertTokenizer
+from transformers import BertTokenizer, BertModel
 from transformers.modeling_outputs import TokenClassifierOutput
 
 
 class ClassifierTransformer(nn.Module):
 
-    def __init__(self, transformer, num_labels: int, device):
+    def __init__(self, transformer: str, num_labels: int, device):
         super(ClassifierTransformer, self).__init__()
-        self.model = transformer
-        self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
+        self.model = BertModel.from_pretrained(transformer, output_hidden_states=True)
+        self.tokenizer = BertTokenizer.from_pretrained(transformer)
         self.device = device
         self.labels = num_labels
 
