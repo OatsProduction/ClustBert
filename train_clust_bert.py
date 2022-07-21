@@ -3,7 +3,7 @@ import argparse
 import torch
 import wandb
 
-from models.ClustBert import ClustBERT
+from models.pytorch.ClustBert import ClustBERT
 from training import DataSetUtils, PlainPytorchTraining
 
 parser = argparse.ArgumentParser()

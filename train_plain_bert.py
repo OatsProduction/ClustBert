@@ -5,7 +5,7 @@ import wandb
 from torch.utils.data import DataLoader
 from transformers import DataCollatorWithPadding
 
-from models.PlainBERT import ClassifierTransformer
+from models.pytorch.PlainBERT import ClassifierTransformer
 from training import DataSetUtils, PlainPytorchTraining
 
 parser = argparse.ArgumentParser()

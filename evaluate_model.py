@@ -2,7 +2,7 @@ import argparse
 
 import senteval
 
-from models.ClustBert import ClustBERT
+from models.pytorch.ClustBert import ClustBERT
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model", type=str, help="define the path to model to load")
