@@ -34,15 +34,15 @@ class LightningBert(pl.LightningModule):
                                      attentions=outputs.attentions)
 
     def training_step(self, batch, batch_idx):
-        x, y = batch
-        outputs = self(x)
+        batch = {k: v for k, v in batch.items()}
+        outputs = self(**batch)
         loss = outputs.loss
 
         return loss
 
     def validation_step(self, batch, batch_idx):
-        x, y = batch
-        outputs = self(x)
+        batch = {k: v for k, v in batch.items()}
+        outputs = self(**batch)
         logits = outputs.logits
         predictions = torch.argmax(logits, dim=-1)
         self.log("val_loss", logits)
