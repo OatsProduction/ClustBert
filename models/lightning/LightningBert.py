@@ -14,7 +14,7 @@ class LightningBert(pl.LightningModule):
         self.labels = num_labels
 
         self.dropout = nn.Dropout(0.1)
-        self.classifier = nn.Linear(768, self.labels)  # load and initialize weights
+        self.classifier = nn.Linear(self.model.config.hidden_size, self.labels)  # load and initialize weights
         self.save_hyperparameters()
 
     def forward(self, input_ids=None, token_type_ids=None, attention_mask=None, labels=None):

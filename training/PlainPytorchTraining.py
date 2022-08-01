@@ -5,8 +5,9 @@ import torch
 import wandb
 from datasets import load_metric, Dataset
 from sklearn.metrics import normalized_mutual_info_score
+from torch.optim import AdamW
 from torch.utils.data import DataLoader
-from transformers import AdamW, get_scheduler, DataCollatorWithPadding
+from transformers import get_scheduler, DataCollatorWithPadding
 
 training_stats = []
 avg_train_loss = 0
