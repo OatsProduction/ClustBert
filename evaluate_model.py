@@ -34,6 +34,7 @@ if __name__ == '__main__':
         transformer.to(device=device)
     else:
         transformer = BertModel.from_pretrained("bert-base-cased", output_hidden_states=True)
+        transformer.to(device=device)
 
     tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
     params = {
