@@ -16,7 +16,7 @@ def batcher(params, batch):
 
     tokens = tokenizer(sentences, padding=True, truncation=True, return_tensors="pt")["input_ids"]
     tokens = tokens.to(device=device)
-    result = transformer.model(tokens)
+    result = transformer(tokens)
     return result
 
 
