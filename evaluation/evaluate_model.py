@@ -18,7 +18,7 @@ def batcher(params, batch):
 
     y = tokenizer(sentences, padding=True, truncation=True, return_tensors="pt")["input_ids"]
     y = y.to(device=device)
-    y = transformer(y)
+    y = transformer(y)[0]
     y = y[:, 0, :].view(-1, 768)
 
     return y
@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
     tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
     params = {
-        'task_path': '../../SentEval/data',
+        'task_path': '../SentEval/data',
         'usepytorch': True,
         'kfold': 5
     }
