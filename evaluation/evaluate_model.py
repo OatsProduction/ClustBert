@@ -1,4 +1,5 @@
 import argparse
+import logging
 
 import senteval
 from transformers import BertModel, BertTokenizer
@@ -21,6 +22,9 @@ def batcher(params, batch):
     return result
 
 
+# Set up logger
+logging.basicConfig(format='%(asctime)s : %(message)s', level=logging.DEBUG)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, help="define the path to model to load")
@@ -41,8 +45,11 @@ if __name__ == '__main__':
     params = {
         'task_path': '../../SentEval/data',
         'usepytorch': True,
-        "batch_size": 1
+        'kfold': 5
     }
+    params['classifier'] = {'nhid': 0, 'optim': 'rmsprop', 'batch_size': 128,
+                            'tenacity': 3, 'epoch_size': 2}
+
     se = senteval.engine.SE(params, batcher, prepare)
 
     transfer_tasks = ['MR']
