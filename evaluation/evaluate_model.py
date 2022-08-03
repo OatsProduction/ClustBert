@@ -52,8 +52,8 @@ if __name__ == '__main__':
     params['classifier'] = {'nhid': 0, 'optim': 'rmsprop', 'batch_size': 128,
                             'tenacity': 3, 'epoch_size': 2}
 
-    batch = "I love it"
-    result = batcher(None, batch)
+    # batch = "I love it"
+    # result = batcher(None, batch)
     se = senteval.engine.SE(params, batcher, prepare)
 
     transfer_tasks = ['MR']
