@@ -33,14 +33,14 @@ if __name__ == '__main__':
     eval_dataloader = DataLoader(valid, num_workers=4, batch_size=16, collate_fn=data_collator)
 
     callbacks = [
-        ModelCheckpoint(dirpath="checkpoints", every_n_train_steps=10)
+        ModelCheckpoint(dirpath="checkpoints")
     ]
 
     wandb_logger = WandbLogger()
-    wandb_logger.watch(bert)
+    wandb_logger.watch(bert, log_graph=False)
     trainer = pl.Trainer(max_epochs=4,
                          logger=wandb_logger,
-                         strategy="ddp",
+                         strategy="ddp_find_unused_parameters_false",
                          accelerator=args.accelerator,
                          callbacks=callbacks,
                          devices=args.devices)

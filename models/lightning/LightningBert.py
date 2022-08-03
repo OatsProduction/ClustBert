@@ -1,8 +1,8 @@
 import pytorch_lightning as pl
 import torch
-from torch import nn, optim
+from torch import nn
 from torchmetrics.functional import accuracy
-from transformers import BertModel, BertTokenizer
+from transformers import BertModel, BertTokenizer, AdamW
 from transformers.modeling_outputs import TokenClassifierOutput
 
 
@@ -11,7 +11,6 @@ class LightningBert(pl.LightningModule):
     def __init__(self, transformer: str, num_labels: int):
         super(LightningBert, self).__init__()
         self.model = BertModel.from_pretrained(transformer, output_hidden_states=True)
-        self.model.eval()
         for param in self.model.parameters():
             param.requires_grad = False
 
@@ -33,15 +32,16 @@ class LightningBert(pl.LightningModule):
 
         loss = None
         if labels is not None:
-            loss_fct = nn.CrossEntropyLoss()
-            loss = loss_fct(logits.view(-1, self.labels), labels.view(-1))
+            loss = self.loss(logits.view(-1, self.labels), labels.view(-1))
 
         return TokenClassifierOutput(loss=loss, logits=logits, hidden_states=outputs.hidden_states,
                                      attentions=outputs.attentions)
 
     def training_step(self, batch, batch_idx):
+        self.train()
         outputs = self(**batch)
         loss = outputs.loss
+        self.log('train_loss', loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -49,8 +49,8 @@ class LightningBert(pl.LightningModule):
         logits = outputs.logits
         predictions = torch.argmax(logits, dim=-1)
         acc = accuracy(predictions, batch["labels"])
-        return predictions
+        self.log('valid_acc', acc)
 
     def configure_optimizers(self):
-        optimizer = optim.Adam(self.parameters(), lr=1e-4)
+        optimizer = AdamW(self.parameters(), lr=3e-4)
         return optimizer
