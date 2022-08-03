@@ -3,8 +3,9 @@ import argparse
 import senteval
 from transformers import BertModel, BertTokenizer
 
+
 # SentEval prepare and batcher
-from models.pytorch.ClustBert import ClustBERT
+# from models.pytorch.ClustBert import ClustBERT
 
 
 def prepare(params, samples):
