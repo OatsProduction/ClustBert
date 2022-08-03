@@ -30,6 +30,7 @@ logging.basicConfig(format='%(asctime)s : %(message)s', level=logging.DEBUG)
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, help="define the path to model to load")
+    parser.add_argument("--senteval_path", type=str, help="define the path to model to load")
     parser.add_argument('--device', type=str, help='the device used by the program. Default is cuda:0')
     args = parser.parse_args()
 
@@ -41,11 +42,13 @@ if __name__ == '__main__':
         transformer.to(device=device)
     else:
         transformer = BertModel.from_pretrained("bert-base-cased", output_hidden_states=True)
+        transformer.eval()
         transformer.to(device=device)
 
     tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
+    senteval_path = args.senteval_path if args.senteval_path is not None else '../../SentEval/data'
     params = {
-        'task_path': '../../SentEval/data',
+        'task_path': senteval_path,
         'usepytorch': True,
         'kfold': 5
     }
