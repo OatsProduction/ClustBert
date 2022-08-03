@@ -2,6 +2,7 @@ import argparse
 import logging
 
 import senteval
+import torch
 from transformers import BertModel, BertTokenizer
 
 
@@ -16,10 +17,11 @@ def prepare(params, samples):
 def batcher(params, batch):
     sentences = [" ".join(s).lower() for s in batch]
 
-    y = tokenizer(sentences, padding=True, truncation=True, return_tensors="pt")["input_ids"]
-    y = y.to(device=device)
-    y = transformer(y)[0]
-    y = y[:, 0, :].view(-1, 768)
+    with torch.no_grad():
+        y = tokenizer(sentences, padding=True, truncation=True, return_tensors="pt")["input_ids"]
+        y = y.to(device=device)
+        y = transformer(y)[0]
+        y = y[:, 0, :].view(-1, 768)
 
     return y
 
