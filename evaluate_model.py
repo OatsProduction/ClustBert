@@ -45,4 +45,7 @@ if __name__ == '__main__':
     se = senteval.engine.SE(params, batcher, prepare)
 
     transfer_tasks = ['MR']
+    print("Started the tasks")
+
     results = se.eval(transfer_tasks)
+    print(results)
