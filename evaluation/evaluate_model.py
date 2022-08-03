@@ -27,7 +27,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     device = "cuda:0" if args.device is None else str(args.device)
-    print("Using device: " + str(device))
+    print("Started the evaluation script with the device: " + str(device))
 
     if args.model is not None:
         transformer = ClustBERT.load(args.model)
@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
     tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
     params = {
-        'task_path': '../SentEval/data',
+        'task_path': '../../SentEval/data',
         'usepytorch': True,
         "batch_size": 1
     }
