@@ -1,6 +1,7 @@
 import argparse
 
 import senteval
+from transformers import BertModel, BertTokenizer
 
 from models.pytorch.ClustBert import ClustBERT
 
@@ -13,9 +14,9 @@ def prepare(params, samples):
 def batcher(params, batch):
     sentences = [" ".join(s).lower() for s in batch]
 
-    tokens = clustBert.tokenizer(sentences, padding=True, truncation=True, return_tensors="pt")["input_ids"]
+    tokens = tokenizer(sentences, padding=True, truncation=True, return_tensors="pt")["input_ids"]
     tokens = tokens.to(device=device)
-    result = clustBert.model(tokens)
+    result = transformer.model(tokens)
     return result
 
 
@@ -28,10 +29,18 @@ if __name__ == '__main__':
     device = "cuda:0" if args.device is None else str(args.device)
     print("Using device: " + str(device))
 
-    clustBert = ClustBERT.load(args.model)
-    clustBert.to(device=device)
+    if args.model is not None:
+        transformer = ClustBERT.load(args.model)
+        transformer.to(device=device)
+    else:
+        transformer = BertModel.from_pretrained("bert-base-cased", output_hidden_states=True)
 
-    params = {'task_path': '/home/willem/Documents/Uni/SentEval/data', 'usepytorch': True, "batch_size": 1}
+    tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
+    params = {
+        'task_path': '../SentEval/data',
+        'usepytorch': True,
+        "batch_size": 1
+    }
     se = senteval.engine.SE(params, batcher, prepare)
 
     transfer_tasks = ['MR']
