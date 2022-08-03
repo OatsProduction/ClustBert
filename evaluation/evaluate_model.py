@@ -16,10 +16,12 @@ def prepare(params, samples):
 def batcher(params, batch):
     sentences = [" ".join(s).lower() for s in batch]
 
-    tokens = tokenizer(sentences, padding=True, truncation=True, return_tensors="pt")["input_ids"]
-    tokens = tokens.to(device=device)
-    result = transformer(tokens)
-    return result
+    y = tokenizer(sentences, padding=True, truncation=True, return_tensors="pt")["input_ids"]
+    y = y.to(device=device)
+    y = transformer(y)
+    y = y[:, 0, :].view(-1, 768)
+
+    return y
 
 
 # Set up logger
@@ -50,6 +52,8 @@ if __name__ == '__main__':
     params['classifier'] = {'nhid': 0, 'optim': 'rmsprop', 'batch_size': 128,
                             'tenacity': 3, 'epoch_size': 2}
 
+    batch = "I love it"
+    result = batcher(None, batch)
     se = senteval.engine.SE(params, batcher, prepare)
 
     transfer_tasks = ['MR']

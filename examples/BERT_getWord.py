@@ -34,9 +34,9 @@ def get_word_vector(sent, idx, tokenizer, model, layers):
     return get_hidden_states(encoded, token_ids_word, model, layers)
 
 
-def main(layers=None):
+if __name__ == '__main__':
     # Use last four layers by default
-    layers = [-4, -3, -2, -1] if layers is None else layers
+    layers = [-4, -3, -2, -1]
     tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
     model = AutoModel.from_pretrained("bert-base-cased", output_hidden_states=True)
 
@@ -45,9 +45,3 @@ def main(layers=None):
 
     word_embedding = get_word_vector(sent, idx, tokenizer, model, layers)
     print(word_embedding)
-
-    return word_embedding
-
-
-if __name__ == '__main__':
-    main()
