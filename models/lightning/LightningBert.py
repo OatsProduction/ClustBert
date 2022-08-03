@@ -1,8 +1,9 @@
 import pytorch_lightning as pl
 import torch
 from torch import nn
+from torch.optim import AdamW
 from torchmetrics.functional import accuracy
-from transformers import BertModel, BertTokenizer, AdamW
+from transformers import BertModel, BertTokenizer
 from transformers.modeling_outputs import TokenClassifierOutput
 
 
