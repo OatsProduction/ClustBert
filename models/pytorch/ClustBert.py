@@ -5,8 +5,10 @@ from time import time
 
 import torch
 import torch.nn as nn
+import wandb
 from datasets import Dataset
 from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 from transformers import BertTokenizer, BertModel
 from transformers.modeling_outputs import TokenClassifierOutput
 
@@ -61,6 +63,9 @@ class ClustBERT(nn.Module):
         X = [sentence.cpu().detach().numpy() for sentence in sentence_embedding]
         pseudo_labels = self.clustering.fit_predict(X)
 
+        silhouette = silhouette_score(X, pseudo_labels)
+        wandb.log({"silhouette": silhouette})
+
         data = data.map(lambda example, idx: {"labels": pseudo_labels[idx]}, with_indices=True)
 
         print("Finished Step 1 --- Clustering in %0.3fs" % (time() - t0))
@@ -85,7 +90,7 @@ class ClustBERT(nn.Module):
         filename = 'clust_bert_' + date + ".model"
         if not os.path.exists("output"):
             os.mkdir("output")
-        pickle.dump(self, open("output/" + filename, 'wb'))
+        pickle.dump(self.model, open("output/" + filename, 'wb'))
 
     @staticmethod
     def load(file_name: str):

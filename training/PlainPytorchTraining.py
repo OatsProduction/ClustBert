@@ -1,6 +1,3 @@
-import matplotlib.pyplot as plt
-import pandas as pd
-import seaborn as sns
 import torch
 import wandb
 from datasets import load_metric, Dataset
@@ -56,26 +53,6 @@ def eval_loop(model, device, eval_dataloader: DataLoader):
 
     global accuracy
     accuracy = metric.compute()["accuracy"]
-
-
-def plot():
-    pd.set_option('precision', 2)
-    df_stats = pd.DataFrame(data=training_stats)
-
-    sns.set(style='darkgrid')
-    sns.set(font_scale=1.5)
-    plt.rcParams["figure.figsize"] = (12, 6)
-
-    # Plot the learning curve.
-    plt.plot(df_stats['Training Loss'], 'b-o', label="Training")
-    plt.plot(df_stats['Valid. Loss'], 'g-o', label="Validation")
-
-    # Label the plot.
-    plt.title("Training & Validation Loss")
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
-    plt.legend()
-    plt.show()
 
 
 def start_training(clust_bert, train: Dataset, validation: Dataset, device):
