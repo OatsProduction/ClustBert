@@ -30,7 +30,7 @@ if __name__ == '__main__':
     wandb.watch(clust_bert)
 
     data_collator = DataCollatorWithPadding(tokenizer=clust_bert.tokenizer)
-    num_epochs = 16
+    num_epochs = 12
 
     for epoch in range(num_epochs):
         print("Loop in Epoch: " + str(epoch))
