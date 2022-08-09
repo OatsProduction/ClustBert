@@ -19,11 +19,11 @@ if __name__ == '__main__':
     device = torch.device("cuda:0" if args.device is None else args.device)
     print("Using device: " + str(device))
 
-    train = DataSetUtils.get_pedia_classes()
+    train = DataSetUtils.get_million_headlines()
     if args.data is not None:
         train = train.select(range(1, args.data))
 
-    clust_bert = ClustBERT(10, device)
+    clust_bert = ClustBERT(100, device)
     train = DataSetUtils.preprocess_datasets(clust_bert.tokenizer, train)
 
     wandb.init(project="test-project", entity="clustbert")
