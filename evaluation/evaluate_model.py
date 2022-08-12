@@ -1,13 +1,10 @@
 import argparse
 import logging
+import pickle
 
 import senteval
 import torch
 from transformers import BertModel, BertTokenizer
-
-
-# SentEval prepare and batcher
-# from models.pytorch.ClustBert import ClustBERT
 
 
 def prepare(params, samples):
@@ -32,6 +29,7 @@ logging.basicConfig(format='%(asctime)s : %(message)s', level=logging.DEBUG)
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, help="define the path to model to load")
+    parser.add_argument("--tasks", type=str, help="define task to perform")
     parser.add_argument("--senteval_path", type=str, help="define the path to model to load")
     parser.add_argument('--device', type=str, help='the device used by the program. Default is cuda:0')
     args = parser.parse_args()
@@ -40,7 +38,7 @@ if __name__ == '__main__':
     print("Started the evaluation script with the device: " + str(device))
 
     if args.model is not None:
-        transformer = ClustBERT.load(args.model)
+        transformer = pickle.load(open(args.model), 'rb')
         transformer.to(device=device)
     else:
         transformer = BertModel.from_pretrained("bert-base-cased", output_hidden_states=True)
@@ -61,7 +59,7 @@ if __name__ == '__main__':
     # result = batcher(None, batch)
     se = senteval.engine.SE(params, batcher, prepare)
 
-    transfer_tasks = ['MR']
+    transfer_tasks = [args.tasks]
     print("Started the tasks")
 
     results = se.eval(transfer_tasks)
