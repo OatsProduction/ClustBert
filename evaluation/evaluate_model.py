@@ -38,7 +38,7 @@ if __name__ == '__main__':
     print("Started the evaluation script with the device: " + str(device))
 
     if args.model is not None:
-        transformer = pickle.load(open(args.model))
+        transformer = pickle.load(open(args.model, 'rb'))
         transformer.to(device=device)
     else:
         transformer = BertModel.from_pretrained("bert-base-cased", output_hidden_states=True)
