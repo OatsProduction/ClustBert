@@ -16,4 +16,5 @@ Nützliche Befehle:
 
 Evaluation
 
-    nohup python evaluate_model.py --model ../output/50k_headlines-ClustBert --device cpu --tasks STS12,STS13,STS14,STS15,STS16 &
+    nohup python evaluate_model.py --model $model_name$ --device cpu --all &
+
