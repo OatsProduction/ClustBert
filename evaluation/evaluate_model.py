@@ -30,7 +30,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, help="define the path to model to load")
     parser.add_argument("--sts", help="perform all STS", action="store_true")
-    parser.add_argument("--tasks", type=str, help="define task to perform")
+    parser.add_argument("--senteval", help="perform all SentEval Tests", action="store_true")
     parser.add_argument("--senteval_path", type=str, help="define the path to model to load")
     parser.add_argument('--device', type=str, help='the device used by the program. Default is cuda:0')
     args = parser.parse_args()
@@ -61,8 +61,11 @@ if __name__ == '__main__':
     if args.sts:
         sts = "STS12,STS13,STS14,STS15,STS16"
         transfer_tasks = sts.split(",")
+    if args.senteval:
+        seneval_tasks = "MR,CR,SUBJ,MPQA,SST2,SST5,TREC,MRPC"
+        transfer_tasks = seneval_tasks.split(",")
     else:
-        transfer_tasks = ["MR"]
+        transfer_tasks = ["SNLI"]
 
     print("Started the tasks")
 
