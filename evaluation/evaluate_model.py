@@ -29,6 +29,7 @@ logging.basicConfig(format='%(asctime)s : %(message)s', level=logging.DEBUG)
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, help="define the path to model to load")
+    parser.add_argument("--sts", help="perform all STS", action="store_true")
     parser.add_argument("--tasks", type=str, help="define task to perform")
     parser.add_argument("--senteval_path", type=str, help="define the path to model to load")
     parser.add_argument('--device', type=str, help='the device used by the program. Default is cuda:0')
@@ -55,11 +56,14 @@ if __name__ == '__main__':
     params['classifier'] = {'nhid': 0, 'optim': 'rmsprop', 'batch_size': 128,
                             'tenacity': 3, 'epoch_size': 2}
 
-    # batch = "I love it"
-    # result = batcher(None, batch)
     se = senteval.engine.SE(params, batcher, prepare)
 
-    transfer_tasks = [args.tasks]
+    if args.sts:
+        sts = "STS12,STS13,STS14,STS15,STS16"
+        transfer_tasks = sts.split(",")
+    else:
+        transfer_tasks = ["MR"]
+
     print("Started the tasks")
 
     results = se.eval(transfer_tasks)
