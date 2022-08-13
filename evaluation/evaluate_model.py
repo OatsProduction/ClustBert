@@ -57,13 +57,13 @@ if __name__ == '__main__':
     params = {
         'task_path': senteval_path,
         'usepytorch': True,
-        'kfold': 5,
+        'kfold': 10,
         'classifier': {
             'nhid': 0,
-            'optim': 'rmsprop',
-            'batch_size': 128,
-            'tenacity': 3,
-            'epoch_size': 2
+            'optim': 'adam',
+            'batch_size': 64,
+            'tenacity': 5,
+            'epoch_size': 4
         }
     }
 
