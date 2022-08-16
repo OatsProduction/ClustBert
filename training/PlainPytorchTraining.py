@@ -7,7 +7,6 @@ from torch.utils.data import DataLoader
 from transformers import get_scheduler, DataCollatorWithPadding
 
 training_stats = []
-avg_train_loss = 0
 accuracy = 0
 
 
@@ -34,8 +33,7 @@ def train_loop(model, device, train_dataloader: DataLoader):
         lr_scheduler.step()
         optimizer.zero_grad()
 
-    global avg_train_loss
-    avg_train_loss = total_train_loss / len(train_dataloader)
+    return total_train_loss / len(train_dataloader)
 
 
 def eval_loop(model, device, eval_dataloader: DataLoader):

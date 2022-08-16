@@ -7,7 +7,7 @@ from transformers import DataCollatorWithPadding
 
 from models.pytorch.ClustBert import ClustBERT
 from training import DataSetUtils
-from training.PlainPytorchTraining import train_loop, avg_train_loss
+from training.PlainPytorchTraining import train_loop
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -36,15 +36,18 @@ if __name__ == '__main__':
 
     for epoch in range(num_epochs):
         print("Loop in Epoch: " + str(epoch))
-        pseudo_label_data = clust_bert.cluster_and_generate(train)
+        pseudo_label_data, silhouette = clust_bert.cluster_and_generate(train)
         # nmi = normalized_mutual_info_score(train["labels"], pseudo_label_data["labels"])
 
         train_dataloader = DataLoader(
             pseudo_label_data, shuffle=True, batch_size=8, collate_fn=data_collator
         )
-        train_loop(clust_bert, device, train_dataloader)
+        loss = train_loop(clust_bert, device, train_dataloader)
 
-        wandb.log({"loss": avg_train_loss})
+        wandb.log({
+            "loss": loss,
+            "silhouette": silhouette
+        })
 
     if args.save:
         clust_bert.save()

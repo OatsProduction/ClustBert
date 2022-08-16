@@ -2,10 +2,10 @@ import os
 import pickle
 from datetime import datetime
 from time import time
+from typing import Tuple
 
 import torch
 import torch.nn as nn
-import wandb
 from datasets import Dataset
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
@@ -54,7 +54,7 @@ class ClustBERT(nn.Module):
         print("Finished the Preprocess the data")
         return data_set
 
-    def cluster_and_generate(self, data: Dataset) -> Dataset:
+    def cluster_and_generate(self, data: Dataset) -> Tuple[Dataset, float]:
         print("Start Step 1 --- Clustering")
         t0 = time()
         self.model.eval()
@@ -64,12 +64,10 @@ class ClustBERT(nn.Module):
         pseudo_labels = self.clustering.fit_predict(X)
 
         silhouette = silhouette_score(X, pseudo_labels)
-        wandb.log({"silhouette": silhouette})
-
         data = data.map(lambda example, idx: {"labels": pseudo_labels[idx]}, with_indices=True)
 
         print("Finished Step 1 --- Clustering in %0.3fs" % (time() - t0))
-        return data
+        return data, silhouette
 
     def get_sentence_vectors_with_token_average(self, texts: list):
         return [self.get_sentence_vector_with_token_average(text["input_ids"], text['token_type_ids'],
