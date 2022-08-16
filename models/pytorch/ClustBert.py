@@ -87,7 +87,7 @@ class ClustBERT(nn.Module):
 
     def save(self):
         date = str(datetime.now())
-        filename = 'clust_bert_' + date + ".model"
+        filename = 'clust_bert_' + date + "_k_" + str(self.num_labels) + ".model"
         if not os.path.exists("output"):
             os.mkdir("output")
         pickle.dump(self.model, open("output/" + filename, 'wb'))
