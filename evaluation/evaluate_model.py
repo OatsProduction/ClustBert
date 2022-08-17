@@ -80,6 +80,6 @@ if __name__ == '__main__':
 
     results = se.eval(transfer_tasks)
 
-    with open(model_name + '_evaluation_results.json', 'w') as outfile:
+    with open(model_name.removesuffix(".model") + '_evaluation_results.json', 'w') as outfile:
         json_object = json.dumps(results, indent=4)
         outfile.write(json_object)

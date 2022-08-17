@@ -16,5 +16,5 @@ Nützliche Befehle:
 
 Evaluation
 
-    nohup python evaluate_model.py --model $model_name$ --device cpu --all &
+    Xnohup python evaluate_model.py --model $model_name$ --device cpu --all &
 
