@@ -5,7 +5,7 @@ import pickle
 
 import senteval
 import torch
-from transformers import BertModel, BertTokenizer
+from transformers import BertModel, BertTokenizer, BertConfig
 
 
 def prepare(params, samples):
@@ -45,12 +45,18 @@ if __name__ == '__main__':
     if args.model is not None:
         model_name = args.model
         transformer = pickle.load(open("../output/" + args.model, 'rb'))
+        transformer.eval()
         transformer.to(device=device)
     else:
         model_name = "plain_bert"
         transformer = BertModel.from_pretrained("bert-base-cased", output_hidden_states=True)
         transformer.eval()
         transformer.to(device=device)
+
+    config = BertConfig.from_pretrained("bert-base-cased")
+    transformer = BertModel(config)
+    transformer.eval()
+    transformer.to(device=device)
 
     tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
     senteval_path = args.senteval_path if args.senteval_path is not None else '../../SentEval/data'
