@@ -43,6 +43,7 @@ if __name__ == '__main__':
     print("Started the evaluation script with the device: " + str(device))
 
     if args.model == "random":
+        model_name = "plain_bert"
         config = BertConfig.from_pretrained("bert-base-cased")
         transformer = BertModel(config)
         transformer.eval()
