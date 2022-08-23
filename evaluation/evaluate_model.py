@@ -43,21 +43,18 @@ if __name__ == '__main__':
     print("Started the evaluation script with the device: " + str(device))
 
     if args.model == "random":
-        model_name = "plain_bert"
+        model_name = args.model
         config = BertConfig.from_pretrained("bert-base-cased")
         transformer = BertModel(config)
-        transformer.eval()
-        transformer.to(device=device)
     elif args.model is not None:
         model_name = args.model
         transformer = pickle.load(open("../output/" + args.model, 'rb'))
-        transformer.eval()
-        transformer.to(device=device)
     else:
         model_name = "plain_bert"
         transformer = BertModel.from_pretrained("bert-base-cased", output_hidden_states=True)
-        transformer.eval()
-        transformer.to(device=device)
+
+    transformer.eval()
+    transformer.to(device=device)
 
     tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
     senteval_path = args.senteval_path if args.senteval_path is not None else '../../SentEval/data'
