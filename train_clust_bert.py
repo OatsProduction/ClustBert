@@ -25,7 +25,7 @@ if __name__ == '__main__':
         train = train.select(range(1, args.data))
 
     k = 100 if args.k is None else args.k
-    clust_bert = ClustBERT(k, device)
+    clust_bert = ClustBERT(k)
     train = DataSetUtils.preprocess_datasets(clust_bert.tokenizer, train)
 
     wandb.init(project="test-project", entity="clustbert")
@@ -42,7 +42,7 @@ if __name__ == '__main__':
         train_dataloader = DataLoader(
             pseudo_label_data, shuffle=True, batch_size=8, collate_fn=data_collator
         )
-        loss = train_loop(clust_bert, device, train_dataloader)
+        loss = train_loop(clust_bert, train_dataloader)
 
         wandb.log({
             "loss": loss,

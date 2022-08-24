@@ -10,7 +10,7 @@ training_stats = []
 accuracy = 0
 
 
-def train_loop(model, device, train_dataloader: DataLoader):
+def train_loop(model, train_dataloader: DataLoader):
     optimizer = AdamW(model.parameters(), lr=3e-5)
     lr_scheduler = get_scheduler(
         "linear",
@@ -23,7 +23,6 @@ def train_loop(model, device, train_dataloader: DataLoader):
     total_train_loss = 0
 
     for batch in train_dataloader:
-        batch = {k: v.to(device) for k, v in batch.items()}
         outputs = model(**batch)
         loss = outputs.loss
         total_train_loss += loss.item()
@@ -67,7 +66,7 @@ def start_training(clust_bert, train: Dataset, validation: Dataset, device):
         train_dataloader = DataLoader(
             pseudo_label_data, shuffle=True, batch_size=8, collate_fn=data_collator
         )
-        train_loop(clust_bert, device, train_dataloader)
+        train_loop(clust_bert, train_dataloader)
         eval_loop(clust_bert, device, eval_dataloader)
 
         wandb.log({"NMI": nmi, "loss": avg_train_loss, "validation": accuracy})

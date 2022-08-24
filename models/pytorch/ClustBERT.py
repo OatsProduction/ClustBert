@@ -15,19 +15,18 @@ from transformers.modeling_outputs import TokenClassifierOutput
 
 class ClustBERT(nn.Module):
 
-    def __init__(self, k: int, device):
+    def __init__(self, k: int):
         super(ClustBERT, self).__init__()
         config = BertConfig.from_pretrained("bert-base-cased", output_hidden_states=True)
         self.model = BertModel(config)
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
-        self.device = device
 
         self.num_labels = k
         self.dropout = nn.Dropout(0.1)
         self.classifier = nn.Linear(768, self.num_labels)  # load and initialize weights
         self.clustering = MiniBatchKMeans(k)
 
-        self.to(device)
+        # self.to(device)
 
     # def __init__(self, config):
     #     super(ClustBERT, self).__init__()

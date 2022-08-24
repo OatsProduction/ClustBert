@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
     for epoch in range(num_epochs):
         print("Start Epoch: " + str(epoch))
-        PlainPytorchTraining.train_loop(bert, device, train_dataloader)
+        PlainPytorchTraining.train_loop(bert, train_dataloader)
         PlainPytorchTraining.eval_loop(bert, device, eval_dataloader)
 
         wandb.log({"loss": PlainPytorchTraining.avg_train_loss, "validation": PlainPytorchTraining.accuracy})
