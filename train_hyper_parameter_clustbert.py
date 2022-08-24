@@ -15,14 +15,12 @@ def start_train(config=None):
         config = wandb.config
 
         train = DataSetUtils.get_million_headlines()
-        train = train.select(range(1, 150))
+        train = train.select(range(1, 1000))
 
-        clust_bert = ClustBERT(config)
-        train = DataSetUtils.preprocess_datasets(clust_bert.tokenizer, train)
-
-        wandb.init(project="test-project", entity="clustbert")
+        clust_bert = ClustBERT(config.k)
         wandb.watch(clust_bert)
 
+        train = DataSetUtils.preprocess_datasets(clust_bert.tokenizer, train)
         data_collator = DataCollatorWithPadding(tokenizer=clust_bert.tokenizer)
 
         for epoch in range(0, 12):
@@ -56,6 +54,5 @@ if __name__ == '__main__':
             }
         }
     }
-
     sweep_id = wandb.sweep(sweep_config, project="Test-ClustBert")
     wandb.agent(sweep_id, start_train, count=5)
