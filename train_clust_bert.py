@@ -5,7 +5,7 @@ import wandb
 from torch.utils.data import DataLoader
 from transformers import DataCollatorWithPadding
 
-from models.pytorch.ClustBert import ClustBERT
+from models.pytorch.ClustBERT import ClustBERT
 from training import DataSetUtils
 from training.PlainPytorchTraining import train_loop
 
