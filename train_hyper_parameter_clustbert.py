@@ -44,12 +44,19 @@ def start_train(config=None):
 
 
 if __name__ == '__main__':
-    hyperparameter_defaults = dict(
-        learning_rate=0.001,
-        k=100,
-        optimizer="adam",
-        epochs=12,
-    )
+    sweep_config = {
+        "name": "my-sweep",
+        "method": "random",
+        "parameters": {
+            "epochs": {
+                "values": [10, 20, 50]
+            },
+            "learning_rate": {
+                "min": 0.0001,
+                "max": 0.1
+            }
+        }
+    }
 
-    sweep_id = wandb.sweep(hyperparameter_defaults, project="ClustBert")
+    sweep_id = wandb.sweep(sweep_config, project="Test-ClustBert")
     wandb.agent(sweep_id, start_train, count=5)
