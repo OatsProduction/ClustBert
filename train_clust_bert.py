@@ -17,7 +17,7 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--save", help="saves the trained model", action="store_true")
     args = parser.parse_args()
 
-    device = torch.device("cuda:0" if args.device is None else args.device)
+    device = torch.device("cuda:1" if args.device is None else args.device)
     print("Using device: " + str(device))
 
     train = DataSetUtils.get_million_headlines()
@@ -26,6 +26,7 @@ if __name__ == '__main__':
 
     k = 100 if args.k is None else args.k
     clust_bert = ClustBERT(k)
+    clust_bert.to(device)
     train = DataSetUtils.preprocess_datasets(clust_bert.tokenizer, train)
 
     wandb.init(project="test-project", entity="clustbert")
@@ -36,13 +37,13 @@ if __name__ == '__main__':
 
     for epoch in range(num_epochs):
         print("Loop in Epoch: " + str(epoch))
-        pseudo_label_data, silhouette = clust_bert.cluster_and_generate(train)
+        pseudo_label_data, silhouette = clust_bert.cluster_and_generate(train, device)
         # nmi = normalized_mutual_info_score(train["labels"], pseudo_label_data["labels"])
 
         train_dataloader = DataLoader(
             pseudo_label_data, shuffle=True, batch_size=8, collate_fn=data_collator
         )
-        loss = train_loop(clust_bert, train_dataloader)
+        loss = train_loop(clust_bert, train_dataloader, device)
 
         wandb.log({
             "loss": loss,

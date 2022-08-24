@@ -9,6 +9,7 @@ import torch.nn as nn
 from datasets import Dataset
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics import silhouette_score
+from torch import Tensor
 from transformers import BertTokenizer, BertModel, BertConfig
 from transformers.modeling_outputs import TokenClassifierOutput
 
@@ -64,12 +65,12 @@ class ClustBERT(nn.Module):
         print("Finished the Preprocess the data")
         return data_set
 
-    def cluster_and_generate(self, data: Dataset) -> Tuple[Dataset, float]:
+    def cluster_and_generate(self, data: Dataset, device) -> Tuple[Dataset, float]:
         print("Start Step 1 --- Clustering")
         t0 = time()
         self.model.eval()
 
-        sentence_embedding = self.get_sentence_vectors_with_token_average(data)
+        sentence_embedding = self.get_sentence_vectors_with_token_average(device, data)
         X = [sentence.cpu().detach().numpy() for sentence in sentence_embedding]
         pseudo_labels = self.clustering.fit_predict(X)
 
@@ -79,15 +80,15 @@ class ClustBERT(nn.Module):
         print("Finished Step 1 --- Clustering in %0.3fs" % (time() - t0))
         return data, silhouette
 
-    def get_sentence_vectors_with_token_average(self, texts: list):
-        return [self.get_sentence_vector_with_token_average(text["input_ids"], text['token_type_ids'],
+    def get_sentence_vectors_with_token_average(self, device, texts: list):
+        return [self.get_sentence_vector_with_token_average(device, text["input_ids"], text['token_type_ids'],
                                                             text['attention_mask']) for text in texts]
 
-    def get_sentence_vector_with_token_average(self, tokens, token_type_ids=None, attention_mask=None):
+    def get_sentence_vector_with_token_average(self, device, tokens: Tensor, token_type_ids=None, attention_mask=None):
         with torch.no_grad():
-            out = self.model(input_ids=tokens.unsqueeze(0),
-                             token_type_ids=token_type_ids.unsqueeze(0),
-                             attention_mask=attention_mask.unsqueeze(0))
+            out = self.model(input_ids=tokens.unsqueeze(0).to(device=device),
+                             token_type_ids=token_type_ids.unsqueeze(0).to(device=device),
+                             attention_mask=attention_mask.unsqueeze(0).to(device=device))
 
         # we only want the hidden_states
         hidden_states = out[2]

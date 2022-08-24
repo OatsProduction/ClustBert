@@ -1,3 +1,4 @@
+import torch
 import wandb
 from torch.utils.data import DataLoader
 from transformers import DataCollatorWithPadding
@@ -13,11 +14,13 @@ def start_train(config=None):
         # If called by wandb.agent, as below,
         # this config will be set by Sweep Controller
         config = wandb.config
+        device = torch.device("cuda:1")
 
         train = DataSetUtils.get_million_headlines()
         train = train.select(range(1, 1000))
 
         clust_bert = ClustBERT(config.k)
+        clust_bert.to(device)
         wandb.watch(clust_bert)
 
         train = DataSetUtils.preprocess_datasets(clust_bert.tokenizer, train)
@@ -25,13 +28,13 @@ def start_train(config=None):
 
         for epoch in range(0, 12):
             print("Loop in Epoch: " + str(epoch))
-            pseudo_label_data, silhouette = clust_bert.cluster_and_generate(train)
+            pseudo_label_data, silhouette = clust_bert.cluster_and_generate(train, device)
             # nmi = normalized_mutual_info_score(train["labels"], pseudo_label_data["labels"])
 
             train_dataloader = DataLoader(
                 pseudo_label_data, shuffle=True, batch_size=8, collate_fn=data_collator
             )
-            loss = train_loop(clust_bert, train_dataloader, config)
+            loss = train_loop(clust_bert, train_dataloader, device, config)
 
             wandb.log({
                 "loss": loss,
