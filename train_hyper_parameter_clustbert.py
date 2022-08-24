@@ -51,5 +51,5 @@ if __name__ == '__main__':
         epochs=12,
     )
 
-    sweep_id = wandb.sweep(config=hyperparameter_defaults, project="ClustBert")
+    sweep_id = wandb.sweep(hyperparameter_defaults, project="ClustBert")
     wandb.agent(sweep_id, start_train, count=5)
