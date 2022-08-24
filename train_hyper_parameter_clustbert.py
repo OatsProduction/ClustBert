@@ -17,7 +17,7 @@ def start_train(config=None):
         device = torch.device("cuda:1")
 
         train = DataSetUtils.get_million_headlines()
-        train = train.select(range(1, 1000))
+        train = train.select(range(1, 100000))
 
         clust_bert = ClustBERT(config.k)
         clust_bert.to(device)
