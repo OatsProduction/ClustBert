@@ -25,7 +25,7 @@ def start_train(config=None):
 
         data_collator = DataCollatorWithPadding(tokenizer=clust_bert.tokenizer)
 
-        for epoch in range(0, config.epochs):
+        for epoch in range(0, 12):
             print("Loop in Epoch: " + str(epoch))
             pseudo_label_data, silhouette = clust_bert.cluster_and_generate(train)
             # nmi = normalized_mutual_info_score(train["labels"], pseudo_label_data["labels"])
@@ -33,7 +33,7 @@ def start_train(config=None):
             train_dataloader = DataLoader(
                 pseudo_label_data, shuffle=True, batch_size=8, collate_fn=data_collator
             )
-            loss = train_loop(clust_bert, train_dataloader)
+            loss = train_loop(clust_bert, train_dataloader, config)
 
             wandb.log({
                 "loss": loss,
@@ -52,10 +52,7 @@ if __name__ == '__main__':
                 "values": [100]
             },
             "learning_rate": {
-                "values": [1e-05, 1e-6]
-            },
-            "optimizer": {
-                "values": ["adam"]
+                "values": [1e-05]
             }
         }
     }

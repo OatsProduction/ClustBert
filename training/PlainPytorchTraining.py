@@ -10,8 +10,10 @@ training_stats = []
 accuracy = 0
 
 
-def train_loop(model, train_dataloader: DataLoader):
-    optimizer = AdamW(model.parameters(), lr=3e-5)
+def train_loop(model, train_dataloader: DataLoader, config):
+    learning_rate = 3e-5 if config.learning_rate is None else config.learning_rate
+
+    optimizer = AdamW(model.parameters(), learning_rate)
     lr_scheduler = get_scheduler(
         "linear",
         optimizer=optimizer,
