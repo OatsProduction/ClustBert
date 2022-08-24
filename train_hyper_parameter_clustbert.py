@@ -45,15 +45,17 @@ def start_train(config=None):
 
 if __name__ == '__main__':
     sweep_config = {
-        "name": "my-sweep",
+        "name": "Cool-Sweep",
         "method": "random",
         "parameters": {
-            "epochs": {
-                "values": [10, 20, 50]
+            "k": {
+                "values": [100]
             },
             "learning_rate": {
-                "min": 0.0001,
-                "max": 0.1
+                "values": [1e-05, 1e-6]
+            },
+            "optimizer": {
+                "values": ["adam"]
             }
         }
     }
