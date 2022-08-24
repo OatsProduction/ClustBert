@@ -1,4 +1,4 @@
-method: bayes
+method: random
 metric:
   goal: minimize
   name: loss
@@ -14,8 +14,4 @@ parameters:
       - 1e-06
       - 1e-05
       - 1e-04
-  optimizer:
-    values:
-      - adam
-      - sgd
 program: train_hyper_parameter_clustbert.py
