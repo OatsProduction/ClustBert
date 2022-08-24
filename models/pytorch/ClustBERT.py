@@ -7,9 +7,9 @@ from typing import Tuple
 import torch
 import torch.nn as nn
 from datasets import Dataset
-from sklearn.cluster import KMeans
+from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics import silhouette_score
-from transformers import BertTokenizer, BertModel
+from transformers import BertTokenizer, BertModel, BertConfig
 from transformers.modeling_outputs import TokenClassifierOutput
 
 
@@ -17,16 +17,27 @@ class ClustBERT(nn.Module):
 
     def __init__(self, k: int, device):
         super(ClustBERT, self).__init__()
-        self.model = BertModel.from_pretrained("bert-base-cased", output_hidden_states=True)
+        config = BertConfig.from_pretrained("bert-base-cased", output_hidden_states=True)
+        self.model = BertModel(config)
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
         self.device = device
 
         self.num_labels = k
         self.dropout = nn.Dropout(0.1)
         self.classifier = nn.Linear(768, self.num_labels)  # load and initialize weights
-        self.clustering = KMeans(k)
+        self.clustering = MiniBatchKMeans(k)
 
         self.to(device)
+
+    # def __init__(self, config):
+    #     super(ClustBERT, self).__init__()
+    #     self.model = BertModel.from_pretrained("bert-base-cased", output_hidden_states=True)
+    #     self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
+    #
+    #     self.num_labels = config.k
+    #     self.dropout = nn.Dropout(0.1)
+    #     self.classifier = nn.Linear(768, self.num_labels)  # load and initialize weights
+    #     self.clustering = KMeans(self.num_labels)
 
     def forward(self, input_ids=None, token_type_ids=None, attention_mask=None, labels=None):
         # Extract outputs from the body
@@ -75,9 +86,9 @@ class ClustBERT(nn.Module):
 
     def get_sentence_vector_with_token_average(self, tokens, token_type_ids=None, attention_mask=None):
         with torch.no_grad():
-            out = self.model(input_ids=tokens.unsqueeze(0).to(self.device),
-                             token_type_ids=token_type_ids.unsqueeze(0).to(self.device),
-                             attention_mask=attention_mask.unsqueeze(0).to(self.device))
+            out = self.model(input_ids=tokens.unsqueeze(0),
+                             token_type_ids=token_type_ids.unsqueeze(0),
+                             attention_mask=attention_mask.unsqueeze(0))
 
         # we only want the hidden_states
         hidden_states = out[2]
