@@ -30,8 +30,7 @@ def start_train(config=None):
         # If called by wandb.agent, as below,
         # this config will be set by Sweep Controller
         config = wandb.config
-        wandb.run.name = "hyper_parameters_lr_" + str(config.learning_rate) + "_k_" + str(config.k)
-        wandb.run.save()
+        wandb.run.name = "lr_" + str(config.learning_rate) + "_k_" + str(config.k) + "_" + wandb.run.id
 
         device = torch.device("cuda:0")
 
@@ -77,7 +76,7 @@ def start_train(config=None):
         se = senteval.engine.SE(params, batcher, prepare)
         result = se.eval(["MR", "CR"])
         mr_cr = (float(result["MR"]["acc"]) + result["CR"]["acc"]) / 2
-        wandb.log({"MR", mr_cr})
+        wandb.log({"MR": mr_cr})
 
 
 if __name__ == '__main__':
