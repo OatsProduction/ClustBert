@@ -30,12 +30,15 @@ def start_train(config=None):
         # If called by wandb.agent, as below,
         # this config will be set by Sweep Controller
         config = wandb.config
+        wandb.run.name = "hyper_parameters_lr_" + str(config.learning_rate) + "_k_" + str(config.k)
+        wandb.run.save()
+
         device = torch.device("cuda:0")
 
         train = DataSetUtils.get_million_headlines()
         train = train.select(range(1, 50))
 
-        clust_bert = ClustBERT(5)
+        clust_bert = ClustBERT(config.k)
         clust_bert.to(device)
         wandb.watch(clust_bert)
 
@@ -50,7 +53,7 @@ def start_train(config=None):
             train_dataloader = DataLoader(
                 pseudo_label_data, shuffle=True, batch_size=8, collate_fn=data_collator
             )
-            loss = train_loop(clust_bert, train_dataloader, device)
+            loss = train_loop(clust_bert, train_dataloader, device, config)
 
             wandb.log({
                 "loss": loss,
@@ -74,7 +77,7 @@ def start_train(config=None):
         se = senteval.engine.SE(params, batcher, prepare)
         result = se.eval(["MR", "CR"])
         mr_cr = (float(result["MR"]["acc"]) + result["CR"]["acc"]) / 2
-        wandb.log("MR", mr_cr)
+        wandb.log({"MR", mr_cr})
 
 
 if __name__ == '__main__':
