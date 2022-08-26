@@ -3,6 +3,14 @@ metric:
   goal: minimize
   name: loss
 parameters:
+  senteval_path:
+    values:
+      - ../SentEval/data
+  data:
+    values:
+      - 10000
+      - 50000
+      - 100000
   k:
     values:
       - 100

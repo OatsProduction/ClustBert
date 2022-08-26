@@ -16,9 +16,8 @@ def batcher(params, batch):
     sentences = [" ".join(s).lower() for s in batch]
 
     with torch.no_grad():
-        y = tokenizer(sentences, padding=True, truncation=True, return_tensors="pt")["input_ids"]
-        y = y.to(device=device)
-        y = transformer(y)[0]
+        y = params['tokenizer'](sentences, padding=True, truncation=True, return_tensors="pt")["input_ids"]
+        y = params['model'](y)[0]
         y = y[:, 0, :].view(-1, 768)
 
     return y
@@ -28,6 +27,30 @@ def batcher(params, batch):
 logging.basicConfig(format='%(asctime)s : %(message)s', level=logging.DEBUG)
 sts = "STS12,STS13,STS14,STS15,STS16"
 seneval_tasks = "MR,CR,SUBJ,MPQA,SST2,SST5,TREC,MRPC"
+
+
+def evaluate_model(transformer, tasks, args):
+    senteval_path = args.senteval_path if args.senteval_path is not None else '../../SentEval/data'
+    transformer.eval()
+
+    params = {
+        'model': transformer,
+        'tokenizer': BertTokenizer.from_pretrained("bert-base-cased"),
+        'task_path': senteval_path,
+        'usepytorch': True,
+        'kfold': 10,
+        'classifier': {
+            'nhid': 0,
+            'optim': 'adam',
+            'batch_size': 64,
+            'tenacity': 5,
+            'epoch_size': 4
+        }
+    }
+    se = senteval.engine.SE(params, batcher, prepare)
+
+    return se.eval(tasks)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -45,33 +68,14 @@ if __name__ == '__main__':
     if args.model == "random":
         model_name = args.model
         config = BertConfig.from_pretrained("bert-base-cased")
-        transformer = BertModel(config)
+        model = BertModel(config)
     elif args.model is not None:
         model_name = args.model
-        transformer = pickle.load(open("../output/" + args.model, 'rb'))
+        model = pickle.load(open("../output/" + args.model, 'rb'))
     else:
         model_name = "plain_bert"
-        transformer = BertModel.from_pretrained("bert-base-cased", output_hidden_states=True)
+        model = BertModel.from_pretrained("bert-base-cased", output_hidden_states=True)
 
-    transformer.eval()
-    transformer.to(device=device)
-
-    tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
-    senteval_path = args.senteval_path if args.senteval_path is not None else '../../SentEval/data'
-    params = {
-        'task_path': senteval_path,
-        'usepytorch': True,
-        'kfold': 10,
-        'classifier': {
-            'nhid': 0,
-            'optim': 'adam',
-            'batch_size': 64,
-            'tenacity': 5,
-            'epoch_size': 4
-        }
-    }
-
-    se = senteval.engine.SE(params, batcher, prepare)
 
     if args.sts:
         transfer_tasks = sts.split(",")
@@ -80,9 +84,9 @@ if __name__ == '__main__':
     if args.all:
         transfer_tasks = (sts + "," + seneval_tasks).split(",")
     else:
-        transfer_tasks = ["SNLI"]
+        transfer_tasks = ["STS12"]
 
-    results = se.eval(transfer_tasks)
+    results = evaluate_model(model, transfer_tasks, args)
 
     with open(model_name.replace(".model", "") + '_evaluation_results.json', 'w') as outfile:
         json_object = json.dumps(results, indent=4)
