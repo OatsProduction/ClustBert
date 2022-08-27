@@ -5,7 +5,7 @@ import pickle
 
 import senteval
 import torch
-from transformers import BertModel, BertTokenizer, BertConfig
+from transformers import BertModel, BertTokenizer, AutoModel, AutoConfig
 
 
 def prepare(params, samples):
@@ -29,8 +29,7 @@ sts = "STS12,STS13,STS14,STS15,STS16"
 seneval_tasks = "MR,CR,SUBJ,MPQA,SST2,SST5,TREC,MRPC"
 
 
-def evaluate_model(transformer, tasks, args):
-    senteval_path = args.senteval_path if args.senteval_path is not None else '../../SentEval/data'
+def evaluate_model(transformer, tasks, senteval_path):
     transformer.eval()
 
     params = {
@@ -67,15 +66,13 @@ if __name__ == '__main__':
 
     if args.model == "random":
         model_name = args.model
-        config = BertConfig.from_pretrained("bert-base-cased")
-        model = BertModel(config)
+        model = AutoModel.from_config(AutoConfig.from_pretrained("bert-base-cased"))
     elif args.model is not None:
         model_name = args.model
         model = pickle.load(open("../output/" + args.model, 'rb'))
     else:
         model_name = "plain_bert"
         model = BertModel.from_pretrained("bert-base-cased", output_hidden_states=True)
-
 
     if args.sts:
         transfer_tasks = sts.split(",")
@@ -84,9 +81,9 @@ if __name__ == '__main__':
     if args.all:
         transfer_tasks = (sts + "," + seneval_tasks).split(",")
     else:
-        transfer_tasks = ["STS12"]
+        transfer_tasks = ["STS13"]
 
-    results = evaluate_model(model, transfer_tasks, args)
+    results = evaluate_model(model, transfer_tasks, "../SentEval/data")
 
     with open(model_name.replace(".model", "") + '_evaluation_results.json', 'w') as outfile:
         json_object = json.dumps(results, indent=4)

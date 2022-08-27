@@ -1,11 +1,10 @@
 method: random
 metric:
-  goal: minimize
-  name: loss
+  goal: maximize
+  name: MR_CR_score
 parameters:
   senteval_path:
-    values:
-      - ../SentEval/data
+    value: ../SentEval/data
   data:
     values:
       - 10000

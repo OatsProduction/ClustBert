@@ -30,12 +30,13 @@ def start_train(config=None):
         # If called by wandb.agent, as below,
         # this config will be set by Sweep Controller
         config = wandb.config
-        wandb.run.name = "lr_" + str(config.learning_rate) + "_k_" + str(config.k) + "_" + wandb.run.id
+        wandb.run.name = "data_" + str(config.data) + "_lr" + str(config.learning_rate) + "_k" + str(
+            config.k) + "_" + wandb.run.id
 
         device = torch.device("cuda:0")
 
         train = DataSetUtils.get_million_headlines()
-        train = train.select(range(1, 50))
+        train = train.select(range(1, config.data))
 
         clust_bert = ClustBERT(config.k)
         clust_bert.to(device)
@@ -44,7 +45,7 @@ def start_train(config=None):
         train = DataSetUtils.preprocess_datasets(clust_bert.tokenizer, train)
         data_collator = DataCollatorWithPadding(tokenizer=clust_bert.tokenizer)
 
-        for epoch in range(0, 1):
+        for epoch in range(0, 12):
             print("Loop in Epoch: " + str(epoch))
             pseudo_label_data, silhouette = clust_bert.cluster_and_generate(train, device)
             # nmi = normalized_mutual_info_score(train["labels"], pseudo_label_data["labels"])
@@ -69,14 +70,18 @@ def start_train(config=None):
             'tokenizer': BertTokenizer.from_pretrained("bert-base-cased"),
             'task_path': "../SentEval/data",
             'usepytorch': True,
-            'kfold': 5,
-            'classifier': {'nhid': 0, 'optim': 'rmsprop', 'batch_size': 128,
-                           'tenacity': 3, 'epoch_size': 2}
+            'classifier': {
+                'nhid': 0,
+                'optim': 'adam',
+                'batch_size': 64,
+                'tenacity': 5,
+                'epoch_size': 4
+            }
         }
         se = senteval.engine.SE(params, batcher, prepare)
         result = se.eval(["MR", "CR"])
-        mr_cr = (float(result["MR"]["acc"]) + result["CR"]["acc"]) / 2
-        wandb.log({"MR": mr_cr})
+        mr_cr = (float(result["MR"]["acc"]) + float(result["CR"]["acc"])) / 2
+        wandb.log({"MR_CR_score": mr_cr})
 
 
 if __name__ == '__main__':
@@ -84,6 +89,9 @@ if __name__ == '__main__':
         "name": "Cool-Sweep",
         "method": "random",
         "parameters": {
+            "data": {
+                "values": [500]
+            },
             "senteval_path": {
                 "values": ["../SentEval/data"]
             },
