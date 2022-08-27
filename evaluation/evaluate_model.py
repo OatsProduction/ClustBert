@@ -83,7 +83,7 @@ if __name__ == '__main__':
     else:
         transfer_tasks = ["STS13"]
 
-    results = evaluate_model(model, transfer_tasks, "../SentEval/data")
+    results = evaluate_model(model, transfer_tasks, args.senteval_path)
 
     with open(model_name.replace(".model", "") + '_evaluation_results.json', 'w') as outfile:
         json_object = json.dumps(results, indent=4)
