@@ -31,6 +31,7 @@ def start_train(config=None):
     with wandb.init(config=config):
         # If called by wandb.agent, as below,
         # this config will be set by Sweep Controller
+        wandb.config.update(config)
         config = wandb.config
         wandb.run.name = "crop_" + str(config.random_crop_size) + "_lr" + str(config.learning_rate) + "_k" + str(
             config.k) + "_" + wandb.run.id
@@ -98,6 +99,5 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--senteval_path", type=str, help="Nots about the training run")
 
     args = parser.parse_args()
-    wandb.config.update(args)
     sweep_id = wandb.sweep(args, project="clustbert")
     wandb.agent(sweep_id, function=start_train, count=5)
