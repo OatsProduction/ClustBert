@@ -99,5 +99,4 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--senteval_path", type=str, help="Nots about the training run")
 
     args = parser.parse_args()
-    sweep_id = wandb.sweep(args, project="clustbert")
-    wandb.agent(sweep_id, function=start_train, count=5)
+    start_train(args)
