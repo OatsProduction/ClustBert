@@ -27,8 +27,6 @@ class ClustBERT(nn.Module):
         self.classifier = nn.Linear(768, self.num_labels)  # load and initialize weights
         self.clustering = MiniBatchKMeans(k)
 
-        # self.to(device)
-
     # def __init__(self, config):
     #     super(ClustBERT, self).__init__()
     #     self.model = BertModel.from_pretrained("bert-base-cased", output_hidden_states=True)

@@ -5,11 +5,16 @@ metric:
 parameters:
   senteval_path:
     value: ../SentEval/data
-  data:
+  epochs:
     values:
+      - 15
+      - 30
+      - 100
+  random_crop_size:
+    values:
+      - 1000
+      - 5000
       - 10000
-      - 50000
-      - 100000
   k:
     values:
       - 100

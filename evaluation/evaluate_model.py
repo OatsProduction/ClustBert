@@ -5,7 +5,7 @@ import pickle
 
 import senteval
 import torch
-from transformers import BertModel, BertTokenizer, AutoModel, AutoConfig
+from transformers import BertModel, BertTokenizer, BertConfig
 
 
 def prepare(params, samples):
@@ -16,7 +16,9 @@ def batcher(params, batch):
     sentences = [" ".join(s).lower() for s in batch]
 
     with torch.no_grad():
-        y = params['tokenizer'](sentences, padding=True, truncation=True, return_tensors="pt")["input_ids"]
+        # y = torch.rand(len(sentences), 768)
+        y = params['tokenizer'](sentences, max_length=512, padding=True, truncation=True, return_tensors="pt")[
+            "input_ids"]
         y = params['model'](y)[0]
         y = y[:, 0, :].view(-1, 768)
 
@@ -66,7 +68,18 @@ if __name__ == '__main__':
 
     if args.model == "random":
         model_name = args.model
-        model = AutoModel.from_config(AutoConfig.from_pretrained("bert-base-cased"))
+        config = BertConfig.from_pretrained("bert-base-cased", pruned_heads=
+        {
+            0: list(range(12)),
+            1: list(range(12)),
+            2: list(range(12)),
+            3: list(range(12)),
+            4: list(range(12)),
+            5: list(range(12)),
+            6: list(range(12)),
+        })
+        model = BertModel(config)
+        # model.init_weights()
     elif args.model is not None:
         model_name = args.model
         model = pickle.load(open("../output/" + args.model, 'rb'))
