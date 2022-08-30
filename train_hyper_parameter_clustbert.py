@@ -110,5 +110,5 @@ if __name__ == '__main__':
         }
     }
 
-    sweep_id = wandb.sweep(sweep_config, project="clustbert")
+    sweep_id = wandb.sweep(project="clustbert")
     wandb.agent(sweep_id, function=start_train, count=5)
