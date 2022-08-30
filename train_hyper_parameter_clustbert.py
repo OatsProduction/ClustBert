@@ -93,7 +93,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-e", "--epochs", type=int, help="Nots about the training run")
     parser.add_argument("-k", "--k", type=int, help="Nots about the training run")
-    parser.add_argument("-c", "--crop_size", type=int, help="Nots about the training run")
+    parser.add_argument("-c", "--random_crop_size", type=int, help="Nots about the training run")
     parser.add_argument("-l", "--learning_rate", type=float, help="Nots about the training run")
     parser.add_argument("-s", "--senteval_path", type=str, help="Nots about the training run")
 
