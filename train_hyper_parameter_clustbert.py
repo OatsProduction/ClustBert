@@ -30,7 +30,7 @@ def start_train(config=None):
         # If called by wandb.agent, as below,
         # this config will be set by Sweep Controller
         config = wandb.config
-        wandb.run.name = "data_" + str(config.data) + "_lr" + str(config.learning_rate) + "_k" + str(
+        wandb.run.name = "crop_" + str(config.random_crop_size) + "_lr" + str(config.learning_rate) + "_k" + str(
             config.k) + "_" + wandb.run.id
 
         device = torch.device("cuda:1")
