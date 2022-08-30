@@ -1,3 +1,5 @@
+import argparse
+
 import senteval
 import torch
 import wandb
@@ -88,27 +90,15 @@ def start_train(config=None):
 
 
 if __name__ == '__main__':
-    sweep_config = {
-        "name": "Cool-Sweep",
-        "method": "random",
-        "parameters": {
-            "epochs": {
-                "values": [1]
-            },
-            "random_crop_size": {
-                "values": [500]
-            },
-            "senteval_path": {
-                "values": ["../SentEval/data"]
-            },
-            "k": {
-                "values": [5]
-            },
-            "learning_rate": {
-                "values": [1e-05]
-            }
-        }
-    }
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-m",
+        "--notes",
+        type=str,
+        default=MODEL_NOTES,
+        help="Nots about the training run")
 
-    sweep_id = wandb.sweep(project="clustbert")
+    args = parser.parse_args()
+    wandb.config.update(args)
+    sweep_id = wandb.sweep(args, project="clustbert")
     wandb.agent(sweep_id, function=start_train, count=5)
