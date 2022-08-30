@@ -92,10 +92,9 @@ def start_train(config=None):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-m",
-        "--notes",
-        type=str,
-        default=MODEL_NOTES,
+        "-e",
+        "--epochs",
+        type=int,
         help="Nots about the training run")
 
     args = parser.parse_args()
