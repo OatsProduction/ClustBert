@@ -10,16 +10,17 @@ from datasets import Dataset
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics import silhouette_score
 from torch import Tensor
-from transformers import BertTokenizer, BertModel, BertConfig
+from transformers import BertTokenizer
 from transformers.modeling_outputs import TokenClassifierOutput
+
+from models.pytorch.PlainBERT import get_random_bert
 
 
 class ClustBERT(nn.Module):
 
     def __init__(self, k: int):
         super(ClustBERT, self).__init__()
-        config = BertConfig.from_pretrained("bert-base-cased", output_hidden_states=True)
-        self.model = BertModel(config)
+        self.model = get_random_bert()
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
 
         self.num_labels = k

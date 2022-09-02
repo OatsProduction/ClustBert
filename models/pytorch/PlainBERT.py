@@ -3,7 +3,7 @@ import pickle
 from datetime import datetime
 
 import torch.nn as nn
-from transformers import BertTokenizer, BertModel
+from transformers import BertTokenizer, BertModel, BertConfig
 from transformers.modeling_outputs import TokenClassifierOutput
 
 
@@ -46,3 +46,18 @@ class ClassifierTransformer(nn.Module):
     @staticmethod
     def load(file_name: str):
         return pickle.load(open(file_name, 'rb'))
+
+
+def get_random_bert():
+    config = BertConfig.from_pretrained("bert-base-cased", output_hidden_states=True, gradient_checkpointing=False,
+                                        pruned_heads=
+                                        {
+                                            0: list(range(12)),
+                                            1: list(range(12)),
+                                            2: list(range(12)),
+                                            3: list(range(12)),
+                                            4: list(range(12)),
+                                            5: list(range(12)),
+                                            6: list(range(12)),
+                                        })
+    return BertModel(config)

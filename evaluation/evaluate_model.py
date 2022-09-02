@@ -5,7 +5,10 @@ import pickle
 
 import senteval
 import torch
-from transformers import BertModel, BertTokenizer, BertConfig
+from transformers import BertModel, BertTokenizer
+from transformers.modeling_utils import no_init_weights
+
+from models.pytorch.PlainBERT import get_random_bert
 
 
 def prepare(params, samples):
@@ -19,7 +22,7 @@ def batcher(params, batch):
         # y = torch.rand(len(sentences), 768)
         y = params['tokenizer'](sentences, max_length=512, padding=True, truncation=True, return_tensors="pt")[
             "input_ids"]
-        y = params['model'](y)[0]
+        y = params['model'](y, y)[0]
         y = y[:, 0, :].view(-1, 768)
 
     return y
@@ -54,6 +57,8 @@ def evaluate_model(transformer, tasks, senteval_path):
 
 
 if __name__ == '__main__':
+    no_init_weights(True)
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, help="define the path to model to load")
     parser.add_argument("--sts", help="perform all STS", action="store_true")
@@ -68,18 +73,7 @@ if __name__ == '__main__':
 
     if args.model == "random":
         model_name = args.model
-        config = BertConfig.from_pretrained("bert-base-cased", pruned_heads=
-        {
-            0: list(range(12)),
-            1: list(range(12)),
-            2: list(range(12)),
-            3: list(range(12)),
-            4: list(range(12)),
-            5: list(range(12)),
-            6: list(range(12)),
-        })
-        model = BertModel(config)
-        # model.init_weights()
+        model = get_random_bert()
     elif args.model is not None:
         model_name = args.model
         model = pickle.load(open("../output/" + args.model, 'rb'))

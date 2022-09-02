@@ -39,7 +39,6 @@ def start_train(config=None):
         device = torch.device("cuda:1")
 
         big_train_dataset = DataSetUtils.get_million_headlines()
-        big_train_dataset = big_train_dataset.select(range(1, 100000))
 
         clust_bert = ClustBERT(config.k)
         clust_bert.to(device)
@@ -66,6 +65,9 @@ def start_train(config=None):
                 "silhouette": silhouette
             })
 
+            if epoch % 10 == 0:
+                validate(clust_bert)
+
         print("Start with SentEval")
 
         clust_bert.to(torch.device("cpu"))
@@ -88,6 +90,25 @@ def start_train(config=None):
         result = se.eval(["MR", "CR"])
         mr_cr = (float(result["MR"]["acc"]) + float(result["CR"]["acc"])) / 2
         wandb.log({"MR_CR_score": mr_cr})
+
+
+def validate(clust_bert):
+    params = {
+        'model': clust_bert.model,
+        'tokenizer': BertTokenizer.from_pretrained("bert-base-cased"),
+        'task_path': "../SentEval/data",
+        'usepytorch': True,
+        'classifier': {
+            'nhid': 0,
+            'optim': 'adam',
+            'batch_size': 64,
+            'tenacity': 5,
+            'epoch_size': 4
+        }
+    }
+    se = senteval.engine.SE(params, batcher, prepare)
+    result = se.eval(["STS13"])
+    wandb.log({"STS13": result["STS13"]["all"]["pearson"]["mean"]})
 
 
 if __name__ == '__main__':
