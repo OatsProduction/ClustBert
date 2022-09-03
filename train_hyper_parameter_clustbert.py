@@ -116,6 +116,8 @@ def validate(clust_bert):
 
     device = torch.device("cuda:0")
     clust_bert.train()
+    for param in clust_bert.parameters():
+        param.requires_grad = True
     clust_bert.to(device)
 
 
