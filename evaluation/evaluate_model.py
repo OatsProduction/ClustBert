@@ -83,6 +83,9 @@ if __name__ == '__main__':
                                                 6: list(range(12)),
                                             })
         model = BertModel(config)
+        model.eval()
+        for param in model.parameters():
+            param.requires_grad = False
     elif args.model is not None:
         model_name = args.model
         model = pickle.load(open("../output/" + args.model, 'rb'))

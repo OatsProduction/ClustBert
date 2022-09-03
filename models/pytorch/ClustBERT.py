@@ -12,12 +12,14 @@ from sklearn.metrics import silhouette_score
 from torch import Tensor
 from transformers import BertTokenizer, BertModel, BertConfig
 from transformers.modeling_outputs import TokenClassifierOutput
+from transformers.modeling_utils import no_init_weights
 
 
 class ClustBERT(nn.Module):
 
     def __init__(self, k: int):
         super(ClustBERT, self).__init__()
+        no_init_weights(True)
         config = BertConfig.from_pretrained("bert-base-cased", output_hidden_states=True, gradient_checkpointing=False,
                                             pruned_heads=
                                             {

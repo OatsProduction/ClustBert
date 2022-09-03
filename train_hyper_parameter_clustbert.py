@@ -36,7 +36,7 @@ def start_train(config=None):
         wandb.run.name = "crop_" + str(config.random_crop_size) + "_lr" + str(config.learning_rate) + "_k" + str(
             config.k) + "_epoch" + str(config.epochs) + "_" + wandb.run.id
 
-        device = torch.device("cuda:1")
+        device = torch.device("cuda:0")
 
         big_train_dataset = DataSetUtils.get_million_headlines()
 
@@ -56,7 +56,7 @@ def start_train(config=None):
             # nmi = normalized_mutual_info_score(train["labels"], pseudo_label_data["labels"])
 
             train_dataloader = DataLoader(
-                pseudo_label_data, shuffle=True, batch_size=8, collate_fn=data_collator
+                pseudo_label_data, batch_size=8, collate_fn=data_collator
             )
             loss = train_loop(clust_bert, train_dataloader, device, config)
 
@@ -93,6 +93,10 @@ def start_train(config=None):
 
 
 def validate(clust_bert):
+    clust_bert.to(torch.device("cpu"))
+    clust_bert.eval()
+    for param in clust_bert.parameters():
+        param.requires_grad = False
     params = {
         'model': clust_bert.model,
         'tokenizer': BertTokenizer.from_pretrained("bert-base-cased"),
@@ -109,6 +113,10 @@ def validate(clust_bert):
     se = senteval.engine.SE(params, batcher, prepare)
     result = se.eval(["STS13"])
     wandb.log({"STS13": result["STS13"]["all"]["pearson"]["mean"]})
+
+    device = torch.device("cuda:0")
+    clust_bert.train()
+    clust_bert.to(device)
 
 
 if __name__ == '__main__':
