@@ -37,7 +37,7 @@ class ClustBERT(nn.Module):
         self.num_labels = k
         self.dropout = nn.Dropout(0.1)
         self.classifier = nn.Linear(768, self.num_labels)  # load and initialize weights
-        self.clustering = KMeans(k)
+        self.clustering = KMeans(self.num_labels)
 
     # def __init__(self, config):
     #     super(ClustBERT, self).__init__()
@@ -78,6 +78,7 @@ class ClustBERT(nn.Module):
     def cluster_and_generate(self, data: Dataset, device) -> Tuple[Dataset, float]:
         print("Start Step 1 --- Clustering")
         t0 = time()
+        self.clustering = KMeans(self.num_labels)
         self.model.eval()
 
         sentence_embedding = self.get_sentence_vectors_with_token_average(device, data)
