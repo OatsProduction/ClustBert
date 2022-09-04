@@ -66,7 +66,7 @@ def start_train(config=None):
             })
 
             if epoch % 10 == 0:
-                validate(clust_bert)
+                validate(clust_bert, device)
 
         print("Start with SentEval")
 
@@ -92,7 +92,7 @@ def start_train(config=None):
         wandb.log({"MR_CR_score": mr_cr})
 
 
-def validate(clust_bert):
+def validate(clust_bert, old_device):
     clust_bert.to(torch.device("cpu"))
     clust_bert.eval()
     for param in clust_bert.parameters():
@@ -114,11 +114,10 @@ def validate(clust_bert):
     result = se.eval(["STS13"])
     wandb.log({"STS13": result["STS13"]["all"]["pearson"]["mean"]})
 
-    device = torch.device("cuda:0")
     clust_bert.train()
     for param in clust_bert.parameters():
         param.requires_grad = True
-    clust_bert.to(device)
+    clust_bert.to(old_device)
 
 
 if __name__ == '__main__':
