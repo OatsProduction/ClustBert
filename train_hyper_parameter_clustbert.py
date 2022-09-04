@@ -49,14 +49,14 @@ def start_train(config=None):
 
         for epoch in range(0, config.epochs):
             print("Loop in Epoch: " + str(epoch))
-            big_train_dataset.shuffle(seed=epoch)
+            big_train_dataset = big_train_dataset.shuffle(seed=epoch)
             train = big_train_dataset.select(range(1, config.random_crop_size))
 
             pseudo_label_data, silhouette = clust_bert.cluster_and_generate(train, device)
             # nmi = normalized_mutual_info_score(train["labels"], pseudo_label_data["labels"])
 
             train_dataloader = DataLoader(
-                pseudo_label_data, batch_size=8, collate_fn=data_collator
+                pseudo_label_data, batch_size=16, collate_fn=data_collator
             )
             loss = train_loop(clust_bert, train_dataloader, device, config)
 

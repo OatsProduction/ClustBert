@@ -7,7 +7,7 @@ from typing import Tuple
 import torch
 import torch.nn as nn
 from datasets import Dataset
-from sklearn.cluster import MiniBatchKMeans
+from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from torch import Tensor
 from transformers import BertTokenizer, BertModel, BertConfig
@@ -37,7 +37,7 @@ class ClustBERT(nn.Module):
         self.num_labels = k
         self.dropout = nn.Dropout(0.1)
         self.classifier = nn.Linear(768, self.num_labels)  # load and initialize weights
-        self.clustering = MiniBatchKMeans(k)
+        self.clustering = KMeans(k)
 
     # def __init__(self, config):
     #     super(ClustBERT, self).__init__()
