@@ -14,9 +14,17 @@ if __name__ == '__main__':
             print("Used file: " + filename)
             stsSplit = sts.split(",")
             eval_json = json.loads(f.read())
+            bigstring = ""
 
             for test in stsSplit:
-                print(test + ": " + str(eval_json[test]["all"]["pearson"]["mean"]))
+                bigstring += test + ": " + str(eval_json[test]["all"]["pearson"]["mean"]) + " | "
+
+            print(bigstring)
+
+            bigstring = ""
 
             for sent in seneval_tasks.split(","):
-                print(sent + ": " + str(eval_json[sent]["acc"]))
+                bigstring += sent + ": " + str(eval_json[sent]["acc"]) + " | "
+
+            print(bigstring)
+            print("----------------------------------------------")
