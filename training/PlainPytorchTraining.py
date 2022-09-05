@@ -1,13 +1,29 @@
+import senteval
 import torch
-import wandb
-from datasets import load_metric, Dataset
-from sklearn.metrics import normalized_mutual_info_score
+from datasets import Dataset
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
-from transformers import get_scheduler, DataCollatorWithPadding
+from transformers import get_scheduler, BertTokenizer
+
+from models.pytorch.ClustBERT import ClustBERT
 
 training_stats = []
 accuracy = 0
+
+
+def prepare(params, samples):
+    return
+
+
+def batcher(params, batch):
+    sentences = [" ".join(s).lower() for s in batch]
+
+    with torch.no_grad():
+        y = params['tokenizer'](sentences, padding=True, truncation=True, return_tensors="pt")["input_ids"]
+        y = params['model'](y)[0]
+        y = y[:, 0, :].view(-1, 768)
+
+    return y
 
 
 def train_loop(model, train_dataloader: DataLoader, device, config=None):
@@ -38,38 +54,49 @@ def train_loop(model, train_dataloader: DataLoader, device, config=None):
     return total_train_loss / len(train_dataloader)
 
 
-def eval_loop(model, device, eval_dataloader: DataLoader):
-    global accuracy
-    metric = load_metric("accuracy")
-    model.eval()
-    for batch in eval_dataloader:
-        batch = {k: v.to(device) for k, v in batch.items()}
-        with torch.no_grad():
-            outputs = model(**batch)
+def generate_clustering_statistic(clust_bert: ClustBERT, dataset: Dataset):
+    labels = dataset["labels"]
+    result = torch.bincount(labels)
+    amount_in_max_cluster = torch.max(result)
+    under_x_cluster = 0
+    x = 10
 
-        logits = outputs.logits
-        predictions = torch.argmax(logits, dim=-1)
-        metric.add_batch(predictions=predictions, references=batch["labels"])
+    for value in result:
+        if value.item() <= x:
+            print(value)
+            under_x_cluster = under_x_cluster + 1
 
-    global accuracy
-    accuracy = metric.compute()["accuracy"]
+    return amount_in_max_cluster, under_x_cluster
 
 
-def start_training(clust_bert, train: Dataset, validation: Dataset, device):
-    data_collator = DataCollatorWithPadding(tokenizer=clust_bert.tokenizer)
-    eval_dataloader = DataLoader(validation, batch_size=8, collate_fn=data_collator)
+def get_normal_sample_pseudolabels(dataset: Dataset, num_labels: int, random_crop_size: int):
+    dataset = dataset.select(range(1, random_crop_size))
+    return dataset
 
-    num_epochs = 16
 
-    for epoch in range(num_epochs):
-        print("Loop in Epoch: " + str(epoch))
-        pseudo_label_data = clust_bert.cluster_and_generate(train)
-        nmi = normalized_mutual_info_score(train["labels"], pseudo_label_data["labels"])
+def eval_loop(clust_bert, old_device):
+    clust_bert.to(torch.device("cpu"))
+    clust_bert.eval()
 
-        train_dataloader = DataLoader(
-            pseudo_label_data, shuffle=True, batch_size=8, collate_fn=data_collator
-        )
-        train_loop(clust_bert, train_dataloader, device)
-        eval_loop(clust_bert, device, eval_dataloader)
+    params = {
+        'model': clust_bert.model,
+        'tokenizer': BertTokenizer.from_pretrained("bert-base-cased"),
+        'task_path': "../SentEval/data",
+        'usepytorch': True,
+        'classifier': {
+            'nhid': 0,
+            'optim': 'adam',
+            'batch_size': 64,
+            'tenacity': 5,
+            'epoch_size': 4
+        }
+    }
+    se = senteval.engine.SE(params, batcher, prepare)
+    result = se.eval(["MR", "CR"])
 
-        wandb.log({"NMI": nmi, "loss": avg_train_loss, "validation": accuracy})
+    clust_bert.train()
+    for param in clust_bert.parameters():
+        param.requires_grad = True
+    clust_bert.to(old_device)
+
+    return (float(result["MR"]["acc"]) + float(result["CR"]["acc"])) / 2

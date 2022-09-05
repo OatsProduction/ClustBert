@@ -20,17 +20,7 @@ class ClustBERT(nn.Module):
     def __init__(self, k: int):
         super(ClustBERT, self).__init__()
         no_init_weights(True)
-        config = BertConfig.from_pretrained("bert-base-cased", output_hidden_states=True, gradient_checkpointing=False,
-                                            pruned_heads=
-                                            {
-                                                0: list(range(12)),
-                                                1: list(range(12)),
-                                                2: list(range(12)),
-                                                3: list(range(12)),
-                                                4: list(range(12)),
-                                                5: list(range(12)),
-                                                6: list(range(12)),
-                                            })
+        config = BertConfig.from_pretrained("bert-base-cased", output_hidden_states=True)
         self.model = BertModel(config)
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
 
