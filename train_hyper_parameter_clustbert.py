@@ -30,7 +30,7 @@ def start_train(config=None):
 
         score = eval_loop(clust_bert, device)
         wandb.log({
-            "mr_cr_score": score
+            "cr_score": score
         })
 
         for epoch in range(0, config.epochs):
@@ -50,7 +50,7 @@ def start_train(config=None):
             wandb.log({
                 "loss": loss,
                 "silhouette": silhouette,
-                "mr_cr_score": score,
+                "cr_score": score,
                 "amount_in_max_cluster": amount_in_max_cluster,
                 "under_x_cluster": under_x_cluster,
             })

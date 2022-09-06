@@ -92,11 +92,11 @@ def eval_loop(clust_bert, old_device):
         }
     }
     se = senteval.engine.SE(params, batcher, prepare)
-    result = se.eval(["MR", "CR"])
+    result = se.eval(["CR"])
 
     clust_bert.train()
     for param in clust_bert.parameters():
         param.requires_grad = True
     clust_bert.to(old_device)
 
-    return (float(result["MR"]["acc"]) + float(result["CR"]["acc"])) / 2
+    return float(result["CR"]["acc"])

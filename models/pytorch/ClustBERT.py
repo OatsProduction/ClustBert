@@ -7,7 +7,7 @@ from typing import Tuple
 import torch
 import torch.nn as nn
 from datasets import Dataset
-from sklearn.cluster import KMeans
+from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics import silhouette_score
 from torch import Tensor
 from transformers import BertTokenizer, BertModel, BertConfig
@@ -27,7 +27,10 @@ class ClustBERT(nn.Module):
         self.num_labels = k
         self.dropout = nn.Dropout(0.1)
         self.classifier = nn.Linear(768, self.num_labels)  # load and initialize weights
-        self.clustering = KMeans(self.num_labels)
+        self.clustering = MiniBatchKMeans(
+            self.num_labels,
+            batch_size=(10 * 1024)
+        )
 
     # def __init__(self, config):
     #     super(ClustBERT, self).__init__()
@@ -68,7 +71,10 @@ class ClustBERT(nn.Module):
     def cluster_and_generate(self, data: Dataset, device) -> Tuple[Dataset, float]:
         print("Start Step 1 --- Clustering")
         t0 = time()
-        self.clustering = KMeans(self.num_labels)
+        self.clustering = MiniBatchKMeans(
+            self.num_labels,
+            batch_size=(10 * 1024)
+        )
         self.model.eval()
 
         sentence_embedding = self.get_sentence_vectors_with_token_average(device, data)
