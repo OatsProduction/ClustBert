@@ -75,8 +75,10 @@ def get_normal_sample_pseudolabels(dataset: Dataset, num_labels: int, random_cro
 
 
 def eval_loop(clust_bert, old_device):
-    clust_bert.to(torch.device("cpu"))
     clust_bert.eval()
+    for param in clust_bert.parameters():
+        param.requires_grad = False
+    clust_bert.to(torch.device("cpu"))
 
     params = {
         'model': clust_bert.model,
