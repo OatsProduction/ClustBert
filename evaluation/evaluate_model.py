@@ -28,8 +28,8 @@ def batcher(params, batch):
 
 # Set up logger
 logging.basicConfig(format='%(asctime)s : %(message)s', level=logging.DEBUG)
-sts = "STS12,STS13,STS14,STS15,STS16"
-seneval_tasks = "MR,CR,SUBJ,MPQA,SST2,SST5,TREC,MRPC"
+sts = ["STS12", "STS13", "STS14", "STS15", "STS16"]
+senteval_tasks = ["MR", "CR", "SUBJ", "MPQA", "SST2", "SST5", "TREC", "MRPC"]
 
 
 def evaluate_model(transformer, tasks, senteval_path):
@@ -94,11 +94,11 @@ if __name__ == '__main__':
         model = BertModel.from_pretrained("bert-base-cased", output_hidden_states=True)
 
     if args.sts:
-        transfer_tasks = sts.split(",")
+        transfer_tasks = sts
     if args.senteval:
-        transfer_tasks = seneval_tasks.split(",")
+        transfer_tasks = senteval_tasks
     if args.all:
-        transfer_tasks = (sts + "," + seneval_tasks).split(",")
+        transfer_tasks = sts + senteval_tasks
     else:
         transfer_tasks = ["STS13"]
 

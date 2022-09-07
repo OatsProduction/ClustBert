@@ -29,7 +29,7 @@ class ClustBERT(nn.Module):
         self.classifier = nn.Linear(768, self.num_labels)  # load and initialize weights
         self.clustering = MiniBatchKMeans(
             self.num_labels,
-            batch_size=(10 * 1024)
+            batch_size=(15 * 1024)
         )
 
     # def __init__(self, config):
@@ -73,7 +73,7 @@ class ClustBERT(nn.Module):
         t0 = time()
         self.clustering = MiniBatchKMeans(
             self.num_labels,
-            batch_size=(10 * 1024)
+            batch_size=(15 * 1024)
         )
         self.model.eval()
 

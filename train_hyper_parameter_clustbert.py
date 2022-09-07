@@ -5,6 +5,8 @@ import wandb
 from torch.utils.data import DataLoader
 from transformers import DataCollatorWithPadding
 
+from evaluation.evaluate_model import evaluate_model, sts, senteval_tasks
+from evaluation.print_evaluation import get_senteval_from_json, get_sts_from_json
 from models.pytorch.ClustBERT import ClustBERT
 from training import DataSetUtils
 from training.PlainPytorchTraining import train_loop, eval_loop, get_normal_sample_pseudolabels, \
@@ -37,23 +39,31 @@ def start_train(config=None):
             print("Loop in Epoch: " + str(epoch))
             big_train_dataset = big_train_dataset.shuffle(seed=epoch)
             pseudo_label_data, silhouette = clust_bert.cluster_and_generate(big_train_dataset, device)
-            amount_in_max_cluster, under_x_cluster = generate_clustering_statistic(clust_bert, pseudo_label_data)
-
             pseudo_label_data = get_normal_sample_pseudolabels(pseudo_label_data, config.k, config.random_crop_size)
+
+            wandb_dic = generate_clustering_statistic(clust_bert, pseudo_label_data)
             train_dataloader = DataLoader(
-                pseudo_label_data, batch_size=16, collate_fn=data_collator
+                pseudo_label_data, batch_size=32, collate_fn=data_collator
             )
 
             loss = train_loop(clust_bert, train_dataloader, device, config)
             score = eval_loop(clust_bert, device)
 
-            wandb.log({
-                "loss": loss,
-                "silhouette": silhouette,
-                "cr_score": score,
-                "amount_in_max_cluster": amount_in_max_cluster,
-                "under_x_cluster": under_x_cluster,
-            })
+            wandb_dic["loss"] = loss
+            wandb_dic["silhouette"] = silhouette
+            wandb_dic["cr_score"] = score
+
+            wandb.log(wandb_dic)
+
+    result = evaluate_model(clust_bert.model, sts.append(senteval_tasks), config.senteval_path)
+
+    sts_result = get_sts_from_json(result)
+    my_table = wandb.Table(columns=sts, data=sts_result)
+    wandb.log({"STS": my_table})
+
+    senteval_result = get_senteval_from_json(result)
+    my_table = wandb.Table(columns=senteval_tasks, data=senteval_result)
+    wandb.log({"SentEval": my_table})
 
 
 if __name__ == '__main__':

@@ -54,19 +54,25 @@ def train_loop(model, train_dataloader: DataLoader, device, config=None):
     return total_train_loss / len(train_dataloader)
 
 
-def generate_clustering_statistic(clust_bert: ClustBERT, dataset: Dataset):
+def generate_clustering_statistic(clust_bert: ClustBERT, dataset: Dataset) -> dict:
     labels = dataset["labels"]
     result = torch.bincount(labels)
     amount_in_max_cluster = torch.max(result)
+    average_cluster_size = torch.mean(result)
+    standard_deviation = torch.std(result)
     under_x_cluster = 0
-    x = 10
+    x = 15
 
     for value in result:
         if value.item() <= x:
-            print(value)
-            under_x_cluster = under_x_cluster + 1
+            under_x_cluster += 1
 
-    return amount_in_max_cluster, under_x_cluster
+    return {
+        "standard_deviation": standard_deviation,
+        "amount_in_max_cluster": amount_in_max_cluster,
+        "average_cluster_size": average_cluster_size,
+        "under_x_cluster": under_x_cluster,
+    }
 
 
 def get_normal_sample_pseudolabels(dataset: Dataset, num_labels: int, random_crop_size: int):
