@@ -58,8 +58,8 @@ def generate_clustering_statistic(clust_bert: ClustBERT, dataset: Dataset) -> di
     labels = dataset["labels"]
     result = torch.bincount(labels)
     amount_in_max_cluster = torch.max(result)
-    average_cluster_size = torch.mean(result)
-    standard_deviation = torch.std(result)
+    average_cluster_size = torch.mean(result.double())
+    standard_deviation = torch.std(result.double())
     under_x_cluster = 0
     x = 15
 
