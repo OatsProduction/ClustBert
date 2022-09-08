@@ -28,7 +28,7 @@ def start_train(config=None):
 
         big_train_dataset = DataSetUtils.get_million_headlines()
         big_train_dataset = big_train_dataset.shuffle(seed=525)
-        big_train_dataset = big_train_dataset.select(range(1, 1000))
+        big_train_dataset = big_train_dataset.select(range(1, 100000))
 
         big_train_dataset = DataSetUtils.preprocess_datasets(clust_bert.tokenizer, big_train_dataset)
         data_collator = DataCollatorWithPadding(tokenizer=clust_bert.tokenizer)
