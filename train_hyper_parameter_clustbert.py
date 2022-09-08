@@ -10,8 +10,7 @@ from evaluation.evaluate_model import evaluate_model, sts, senteval_tasks
 from evaluation.print_evaluation import get_senteval_from_json, get_sts_from_json
 from models.pytorch.ClustBERT import ClustBERT
 from training import DataSetUtils
-from training.PlainPytorchTraining import train_loop, eval_loop, get_normal_sample_pseudolabels, \
-    generate_clustering_statistic, UnifLabelSampler
+from training.PlainPytorchTraining import train_loop, eval_loop, generate_clustering_statistic, UnifLabelSampler
 
 
 def start_train(config=None):
@@ -43,7 +42,6 @@ def start_train(config=None):
             print("Loop in Epoch: " + str(epoch))
             big_train_dataset = big_train_dataset.shuffle(seed=epoch)
             pseudo_label_data, silhouette = clust_bert.cluster_and_generate(big_train_dataset, device)
-            pseudo_label_data = get_normal_sample_pseudolabels(pseudo_label_data, config.k, config.random_crop_size)
 
             wandb_dic = generate_clustering_statistic(clust_bert, pseudo_label_data)
             clust_bert.classifier = None
