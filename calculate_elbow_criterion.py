@@ -13,7 +13,7 @@ if __name__ == '__main__':
     parser.add_argument('--device', type=str, help='the index of the cuda GPU. Default is 0')
     args = parser.parse_args()
 
-    wandb.init(project="test-project", entity="clustbert")
+    wandb.init(project="ClustBert")
     device = torch.device("cpu")
     print("Using device: " + str(device))
     clust_bert = ClustBERT(100)
