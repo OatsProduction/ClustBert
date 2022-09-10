@@ -2,8 +2,6 @@ import numpy as np
 import senteval
 import torch
 from datasets import Dataset
-from matplotlib import pyplot as plt
-from sklearn.cluster import MiniBatchKMeans
 from torch.optim import AdamW
 from torch.utils.data import DataLoader, Sampler
 from transformers import get_scheduler, BertTokenizer
@@ -110,23 +108,6 @@ def eval_loop(clust_bert, old_device):
     clust_bert.to(old_device)
 
     return float(result["CR"]["acc"])
-
-
-def elbow_criteria(clust_bert, device, dataset: Dataset, ks: list):
-    inertias = []
-    sentence_embedding = clust_bert.get_sentence_vectors_with_token_average(device, dataset)
-    X = [sentence.cpu().detach().numpy() for sentence in sentence_embedding]
-
-    for k in ks:
-        kmean_model = MiniBatchKMeans(n_clusters=k)
-        kmean_model.fit(X)
-        inertias.append(kmean_model.inertia_)
-
-    plt.plot(ks, inertias, 'bx-')
-    plt.xlabel('Values of K')
-    plt.ylabel('Distortion')
-    plt.title('The Elbow Method using interia')
-    plt.show()
 
 
 class UnifLabelSampler(Sampler):
