@@ -28,7 +28,6 @@ def start_train(config=None):
 
         big_train_dataset = DataSetUtils.get_million_headlines()
         big_train_dataset = big_train_dataset.shuffle(seed=525)
-        big_train_dataset = big_train_dataset.select(range(1, 100000))
 
         big_train_dataset = DataSetUtils.preprocess_datasets(clust_bert.tokenizer, big_train_dataset)
         data_collator = DataCollatorWithPadding(tokenizer=clust_bert.tokenizer)
@@ -48,7 +47,7 @@ def start_train(config=None):
             clust_bert.classifier = nn.Linear(768, clust_bert.num_labels)
             clust_bert.to(device)
 
-            images_lists = [[] for i in range(clust_bert.num_labels)]
+            images_lists = [[] for _ in range(clust_bert.num_labels)]
             for i in range(len(pseudo_label_data)):
                 images_lists[int(pseudo_label_data[i]["labels"])].append(i)
 

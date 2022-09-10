@@ -20,7 +20,7 @@ def batcher(params, batch):
         # y = torch.rand(len(sentences), 768)
         y = params['tokenizer'](sentences, max_length=512, padding=True, truncation=True, return_tensors="pt")[
             "input_ids"]
-        y = params['model'](y, y)[0]
+        y = params['model'](y)[0]
         y = y[:, 0, :].view(-1, 768)
 
     return y
@@ -34,6 +34,9 @@ senteval_tasks = ["MR", "CR", "SUBJ", "MPQA", "SST2", "SST5", "TREC", "MRPC"]
 
 def evaluate_model(transformer, tasks, senteval_path):
     transformer.eval()
+    for parameter in transformer.parameters():
+        parameter.requires_grad = False
+    transformer.to(torch.device("cpu"))
 
     params = {
         'model': transformer,

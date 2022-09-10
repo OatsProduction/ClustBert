@@ -27,9 +27,10 @@ class ClustBERT(nn.Module):
         self.num_labels = k
         self.dropout = nn.Dropout(0.1)
         self.classifier = nn.Linear(768, self.num_labels)  # load and initialize weights
+        self.kmeans_batch_size = 100 * 1024
         self.clustering = MiniBatchKMeans(
             self.num_labels,
-            batch_size=(15 * 1024)
+            batch_size=self.kmeans_batch_size,
         )
 
     # def __init__(self, config):
@@ -73,11 +74,11 @@ class ClustBERT(nn.Module):
         t0 = time()
         self.clustering = MiniBatchKMeans(
             self.num_labels,
-            batch_size=(15 * 1024)
+            batch_size=self.kmeans_batch_size,
         )
         self.model.eval()
 
-        sentence_embedding = self.get_sentence_vectors_with_token_average(device, data)
+        sentence_embedding = self.get_sentence_vectors_with_cls_token(device, data)
         X = [sentence.cpu().detach().numpy() for sentence in sentence_embedding]
         pseudo_labels = self.clustering.fit_predict(X)
 
@@ -87,7 +88,11 @@ class ClustBERT(nn.Module):
         print("Finished Step 1 --- Clustering in %0.3fs" % (time() - t0))
         return data, silhouette
 
-    def get_sentence_vectors_with_token_average(self, device, texts: list):
+    def get_sentence_vectors_with_cls_token(self, device, texts: Dataset):
+        return [self.get_sentence_vector_with_cls_token(device, text["input_ids"], text['token_type_ids'],
+                                                        text['attention_mask']) for text in texts]
+
+    def get_sentence_vectors_with_token_average(self, device, texts: Dataset):
         return [self.get_sentence_vector_with_token_average(device, text["input_ids"], text['token_type_ids'],
                                                             text['attention_mask']) for text in texts]
 
@@ -100,6 +105,18 @@ class ClustBERT(nn.Module):
         # we only want the hidden_states
         hidden_states = out[2]
         return torch.mean(hidden_states[-1], dim=1).squeeze()
+
+    def get_sentence_vector_with_cls_token(self, device, tokens: Tensor, token_type_ids=None, attention_mask=None):
+        with torch.no_grad():
+            out = self.model(input_ids=tokens.unsqueeze(0).to(device=device),
+                             token_type_ids=token_type_ids.unsqueeze(0).to(device=device),
+                             attention_mask=attention_mask.unsqueeze(0).to(device=device))
+
+        y = out[0]  # outputs[0]=last hidden state
+        y = y[:, 0, :]
+        y = y.squeeze(0)
+
+        return y
 
     def save(self):
         date = str(datetime.now())
