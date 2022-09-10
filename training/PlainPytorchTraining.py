@@ -73,7 +73,6 @@ def generate_clustering_statistic(clust_bert: ClustBERT, dataset: Dataset) -> di
     return {
         "standard_deviation": standard_deviation,
         "amount_in_max_cluster": amount_in_max_cluster,
-        "average_cluster_size": average_cluster_size,
         "under_x_cluster": under_x_cluster,
     }
 
