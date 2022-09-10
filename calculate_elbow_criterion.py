@@ -1,6 +1,6 @@
 import argparse
 
-from pytorch_lightning.loggers import wandb
+import wandb
 from sklearn.cluster import MiniBatchKMeans
 from wandb.wandb_torch import torch
 
