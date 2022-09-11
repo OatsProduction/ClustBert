@@ -17,6 +17,7 @@ if __name__ == '__main__':
     device = torch.device("cpu")
     print("Using device: " + str(device))
     clust_bert = ClustBERT(100)
+    wandb.watch(clust_bert)
 
     dataset = get_million_headlines().shuffle(seed=525)
     dataset = dataset.select(range(1, 100000))
