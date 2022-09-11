@@ -26,7 +26,7 @@ if __name__ == '__main__':
     sentence_embedding = clust_bert.get_sentence_vectors_with_cls_token(device, dataset)
     X = [sentence.cpu().detach().numpy() for sentence in sentence_embedding]
 
-    for k in range(10000):
+    for k in range(1, 10000):
         kmeans_batch_size = 10 * 1024
         kmean_model = MiniBatchKMeans(
             k, batch_size=kmeans_batch_size,
