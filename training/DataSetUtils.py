@@ -2,8 +2,7 @@ import random
 from typing import Union, Dict, Any
 
 import nlpaug.augmenter.word as naw
-from datasets import Dataset
-from datasets import load_dataset
+from datasets import load_dataset, Dataset
 from transformers import BertTokenizer
 
 tuples = [
@@ -95,7 +94,7 @@ def get_pedia_classes() -> Dataset:
 
 def preprocess_datasets(tokenizer: BertTokenizer, data_set: Dataset) -> Dataset:
     print("Preprocess the data")
-    data_set = data_set.map(augment_dataset)
+    data_set = data_set.map(augment_dataset, batched=True, batch_size=100)
 
     data_set = data_set.map(
         lambda data_point: tokenizer(data_point['text'], padding=True, truncation=True),
@@ -110,7 +109,7 @@ def preprocess_datasets(tokenizer: BertTokenizer, data_set: Dataset) -> Dataset:
     return data_set
 
 
-def augment_dataset(text: str) -> Dict[str, Any]:
+def augment_dataset(data_point) -> Dict[str, Any]:
     aug = random.choices(tuples, weights=(60, 10, 10, 10, 10, 10, 10), k=1)[0]
     # back_translation_aug = naw.BackTranslationAug(
     #     from_model_name='facebook/wmt19-en-de',
@@ -119,8 +118,9 @@ def augment_dataset(text: str) -> Dict[str, Any]:
     # back_translation_aug.augment(str(text))
 
     if aug is None:
-        return text
+        return data_point
     else:
-        # texts = [str(i) for i in text.data["text"]]
-        augmented_text = aug.augment(str(text))
-        return {"data": augmented_text}
+        texts = [str(i) for i in data_point.data["text"]]
+        augmented_text = aug.augment(str(data_point))
+        data_point["text"] = augmented_text
+        return data_point
