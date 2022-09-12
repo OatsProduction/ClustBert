@@ -121,6 +121,6 @@ def augment_dataset(data_point) -> Dict[str, Any]:
         return data_point
     else:
         texts = [str(i) for i in data_point.data["text"]]
-        augmented_text = aug.augment(str(data_point))
+        augmented_text = aug.augment(texts)
         data_point["text"] = augmented_text
         return data_point
