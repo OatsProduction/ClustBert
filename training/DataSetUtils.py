@@ -10,8 +10,8 @@ tuples = [
     naw.SynonymAug(aug_src='wordnet'),
     naw.ContextualWordEmbsAug(
         model_path='distilbert-base-uncased', action="substitute"),
-    naw.RandomWordAug(action='crop'),
-    naw.RandomWordAug(),
+    # naw.RandomWordAug(action='crop'),
+    # naw.RandomWordAug(),
     naw.ContextualWordEmbsAug(
         model_path='roberta-base', action="substitute"),
     naw.ContextualWordEmbsAug(
@@ -110,7 +110,7 @@ def preprocess_datasets(tokenizer: BertTokenizer, data_set: Dataset) -> Dataset:
 
 
 def augment_dataset(data_point) -> Dict[str, Any]:
-    aug = random.choices(tuples, weights=(60, 10, 10, 10, 10, 10, 10), k=1)[0]
+    aug = random.choices(tuples, weights=(60, 10, 10, 10, 10), k=1)[0]
     # back_translation_aug = naw.BackTranslationAug(
     #     from_model_name='facebook/wmt19-en-de',
     #     to_model_name='facebook/wmt19-de-en'
@@ -120,7 +120,7 @@ def augment_dataset(data_point) -> Dict[str, Any]:
     if aug is None:
         return data_point
     else:
-        texts = [str(i) for i in data_point.data["text"]]
+        texts = [str(i) for i in data_point.data["text"] if i]
         augmented_text = aug.augment(texts)
         data_point["text"] = augmented_text
         return data_point
