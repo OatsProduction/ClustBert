@@ -6,6 +6,19 @@ from datasets import Dataset
 from datasets import load_dataset
 from transformers import BertTokenizer
 
+tuples = [
+    None,
+    naw.SynonymAug(aug_src='wordnet'),
+    naw.ContextualWordEmbsAug(
+        model_path='distilbert-base-uncased', action="substitute"),
+    naw.RandomWordAug(action='crop'),
+    naw.RandomWordAug(),
+    naw.ContextualWordEmbsAug(
+        model_path='roberta-base', action="substitute"),
+    naw.ContextualWordEmbsAug(
+        model_path='bert-base-uncased', action="insert"),
+]
+
 
 def get_snli_dataset() -> Union:
     print("Getting the SNLI datasets")
@@ -98,26 +111,16 @@ def preprocess_datasets(tokenizer: BertTokenizer, data_set: Dataset) -> Dataset:
 
 
 def augment_dataset(text: str) -> Dict[str, Any]:
-    tuples = [
-        None,
-        naw.SynonymAug(aug_src='wordnet'),
-        naw.ContextualWordEmbsAug(
-            model_path='distilbert-base-uncased', action="substitute"),
-        naw.RandomWordAug(action='crop'),
-        naw.RandomWordAug(),
-        naw.ContextualWordEmbsAug(
-            model_path='roberta-base', action="substitute"),
-        naw.ContextualWordEmbsAug(
-            model_path='bert-base-uncased', action="insert"),
-    ]
-    aug = random.choices(tuples, weights=(50, 10, 10, 10, 10, 10, 10), k=1)[0]
+    aug = random.choices(tuples, weights=(60, 10, 10, 10, 10, 10, 10), k=1)[0]
     # back_translation_aug = naw.BackTranslationAug(
     #     from_model_name='facebook/wmt19-en-de',
     #     to_model_name='facebook/wmt19-de-en'
     # )
     # back_translation_aug.augment(str(text))
+
     if aug is None:
         return text
     else:
+        # texts = [str(i) for i in text.data["text"]]
         augmented_text = aug.augment(str(text))
         return {"data": augmented_text}
