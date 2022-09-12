@@ -4,7 +4,6 @@ import torch
 import wandb
 from torch import nn
 from torch.utils.data import DataLoader
-from transformers import DataCollatorWithPadding
 
 from evaluation.evaluate_model import evaluate_model, sts, senteval_tasks
 from evaluation.print_evaluation import get_senteval_from_json, get_sts_from_json
@@ -20,17 +19,14 @@ def start_train(config=None):
         wandb.run.name = "crop_" + str(config.random_crop_size) + "_lr" + str(config.learning_rate) + "_k" + str(
             config.k) + "_epoch" + str(config.epochs) + "_" + wandb.run.id
 
-        device = torch.device("cuda:2")
+        device = torch.device("cuda:0")
 
         clust_bert = ClustBERT(config.k)
         clust_bert.to(device)
         wandb.watch(clust_bert)
 
-        big_train_dataset = DataSetUtils.get_million_headlines()
-        big_train_dataset = big_train_dataset.shuffle(seed=525)
-
-        big_train_dataset = DataSetUtils.preprocess_datasets(clust_bert.tokenizer, big_train_dataset)
-        data_collator = DataCollatorWithPadding(tokenizer=clust_bert.tokenizer)
+        big_train_dataset = DataSetUtils.get_million_headlines().shuffle(seed=525)
+        big_train_dataset = big_train_dataset.select(range(1, 100000))
 
         score = eval_loop(clust_bert, device)
         wandb.log({
@@ -40,6 +36,8 @@ def start_train(config=None):
         for epoch in range(0, config.epochs):
             print("Loop in Epoch: " + str(epoch))
             big_train_dataset = big_train_dataset.shuffle(seed=epoch)
+            big_train_dataset = DataSetUtils.preprocess_datasets(clust_bert.tokenizer, big_train_dataset)
+
             pseudo_label_data, silhouette = clust_bert.cluster_and_generate(big_train_dataset, device)
 
             wandb_dic = generate_clustering_statistic(clust_bert, pseudo_label_data)
@@ -54,7 +52,7 @@ def start_train(config=None):
             sampler = UnifLabelSampler(int(len(pseudo_label_data)), images_lists)
 
             train_dataloader = DataLoader(
-                pseudo_label_data, batch_size=256, sampler=sampler, collate_fn=data_collator
+                pseudo_label_data, batch_size=256, sampler=sampler
             )
 
             loss = train_loop(clust_bert, train_dataloader, device, config)

@@ -1,7 +1,10 @@
-from typing import Union
+import random
+from typing import Union, Dict, Any
 
+import nlpaug.augmenter.word as naw
 from datasets import Dataset
 from datasets import load_dataset
+from transformers import BertTokenizer
 
 
 def get_snli_dataset() -> Union:
@@ -77,15 +80,13 @@ def get_pedia_classes() -> Dataset:
     return dataset
 
 
-def preprocess_datasets(tokenizer, data_set: Dataset) -> Dataset:
+def preprocess_datasets(tokenizer: BertTokenizer, data_set: Dataset) -> Dataset:
     print("Preprocess the data")
+    data_set = data_set.map(augment_dataset)
+
     data_set = data_set.map(
         lambda data_point: tokenizer(data_point['text'], padding=True, truncation=True),
         batched=True)
-
-    # for data in data_set:
-    #     if data["labels"] == -1:
-    #         print("UHU")
 
     if 'labels' in data_set:
         data_set.set_format("torch", columns=['input_ids', 'token_type_ids', 'attention_mask', 'labels'])
@@ -94,3 +95,29 @@ def preprocess_datasets(tokenizer, data_set: Dataset) -> Dataset:
 
     print("Finsihed the Preprocess the data")
     return data_set
+
+
+def augment_dataset(text: str) -> Dict[str, Any]:
+    tuples = [
+        None,
+        naw.SynonymAug(aug_src='wordnet'),
+        naw.ContextualWordEmbsAug(
+            model_path='distilbert-base-uncased', action="substitute"),
+        naw.RandomWordAug(action='crop'),
+        naw.RandomWordAug(),
+        naw.ContextualWordEmbsAug(
+            model_path='roberta-base', action="substitute"),
+        naw.ContextualWordEmbsAug(
+            model_path='bert-base-uncased', action="insert"),
+    ]
+    aug = random.choices(tuples, weights=(50, 10, 10, 10, 10, 10, 10), k=1)[0]
+    # back_translation_aug = naw.BackTranslationAug(
+    #     from_model_name='facebook/wmt19-en-de',
+    #     to_model_name='facebook/wmt19-de-en'
+    # )
+    # back_translation_aug.augment(str(text))
+    if aug is None:
+        return text
+    else:
+        augmented_text = aug.augment(str(text))
+        return {"data": augmented_text}
