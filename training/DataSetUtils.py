@@ -96,19 +96,19 @@ def get_pedia_classes() -> Dataset:
 
 def preprocess_datasets(tokenizer: BertTokenizer, data_set: Dataset) -> Dataset:
     print("Preprocess the data")
-    data_set = data_set.map(augment_dataset, batched=True)
+    new_dataset = data_set.map(augment_dataset, batched=True)
 
-    data_set = data_set.map(
+    new_dataset = new_dataset.map(
         lambda data_point: tokenizer(data_point['text'], padding=True, truncation=True),
         batched=True)
 
-    if 'labels' in data_set:
-        data_set.set_format("torch", columns=['input_ids', 'token_type_ids', 'attention_mask', 'labels'])
+    if 'labels' in new_dataset:
+        new_dataset.set_format("torch", columns=['input_ids', 'token_type_ids', 'attention_mask', 'labels'])
     else:
-        data_set.set_format("torch", columns=['input_ids', 'token_type_ids', 'attention_mask'])
+        new_dataset.set_format("torch", columns=['input_ids', 'token_type_ids', 'attention_mask'])
 
-    print("Finsihed the Preprocess the data")
-    return data_set
+    print("Finished the Preprocess the data")
+    return new_dataset
 
 
 def augment_dataset(data_point) -> Dict[str, Any]:

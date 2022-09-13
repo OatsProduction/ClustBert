@@ -41,9 +41,9 @@ def start_train(config=None):
     for epoch in range(0, config.epochs):
         print("Loop in Epoch: " + str(epoch))
         big_train_dataset = big_train_dataset.shuffle(seed=epoch)
-        big_train_dataset = DataSetUtils.preprocess_datasets(clust_bert.tokenizer, big_train_dataset)
+        pre_processed_dataset = DataSetUtils.preprocess_datasets(clust_bert.tokenizer, big_train_dataset)
 
-        pseudo_label_data, silhouette = clust_bert.cluster_and_generate(big_train_dataset, device)
+        pseudo_label_data, silhouette = clust_bert.cluster_and_generate(pre_processed_dataset, device)
 
         wandb_dic = generate_clustering_statistic(clust_bert, pseudo_label_data)
         clust_bert.classifier = None
