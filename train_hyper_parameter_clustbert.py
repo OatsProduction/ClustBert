@@ -5,6 +5,7 @@ import torch
 import wandb
 from torch import nn
 from torch.utils.data import DataLoader
+from transformers import DataCollatorWithPadding
 
 from evaluation.evaluate_model import evaluate_model, sts, senteval_tasks
 from evaluation.print_evaluation import get_senteval_from_json, get_sts_from_json
@@ -29,7 +30,7 @@ def start_train(config=None):
         wandb.watch(clust_bert)
 
     big_train_dataset = DataSetUtils.get_million_headlines().shuffle(seed=525)
-    big_train_dataset = big_train_dataset.select(range(1, 100000))
+    big_train_dataset = big_train_dataset.select(range(1, 10000))
 
     # if not args.wandb:
     #     score = eval_loop(clust_bert, device)
@@ -54,9 +55,10 @@ def start_train(config=None):
             images_lists[int(pseudo_label_data[i]["labels"])].append(i)
 
         sampler = UnifLabelSampler(int(len(pseudo_label_data)), images_lists)
+        data_collator = DataCollatorWithPadding(tokenizer=clust_bert.tokenizer)
 
         train_dataloader = DataLoader(
-            pseudo_label_data, batch_size=256, sampler=sampler
+            pseudo_label_data, batch_size=256, sampler=sampler, collate_fn=data_collator
         )
 
         loss = train_loop(clust_bert, train_dataloader, device, config)
