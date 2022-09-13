@@ -7,7 +7,18 @@ from datasets import load_dataset, Dataset
 from transformers import BertTokenizer
 
 logging.disable(logging.INFO)  # disable INFO and DEBUG logger everywhere
-
+tuples = [
+    None,
+    naw.SynonymAug(aug_src='wordnet'),
+    naw.ContextualWordEmbsAug(
+        model_path='distilbert-base-uncased', action="substitute"),
+    # naw.RandomWordAug(action='crop'),
+    # naw.RandomWordAug(),
+    naw.ContextualWordEmbsAug(
+        model_path='roberta-base', action="substitute"),
+    naw.ContextualWordEmbsAug(
+        model_path='bert-base-uncased', action="insert"),
+]
 
 def get_snli_dataset() -> Union:
     print("Getting the SNLI datasets")
@@ -84,7 +95,7 @@ def get_pedia_classes() -> Dataset:
 
 def preprocess_datasets(tokenizer: BertTokenizer, data_set: Dataset) -> Dataset:
     print("Preprocess the data")
-    data_set = data_set.map(augment_dataset, batched=True, num_proc=16)
+    data_set = data_set.map(augment_dataset, num_proc=32)
 
     data_set = data_set.map(
         lambda data_point: tokenizer(data_point['text'], padding=True, truncation=True),
@@ -100,18 +111,6 @@ def preprocess_datasets(tokenizer: BertTokenizer, data_set: Dataset) -> Dataset:
 
 
 def augment_dataset(data_point) -> Dict[str, Any]:
-    tuples = [
-        None,
-        naw.SynonymAug(aug_src='wordnet'),
-        naw.ContextualWordEmbsAug(
-            model_path='distilbert-base-uncased', action="substitute"),
-        # naw.RandomWordAug(action='crop'),
-        # naw.RandomWordAug(),
-        naw.ContextualWordEmbsAug(
-            model_path='roberta-base', action="substitute"),
-        naw.ContextualWordEmbsAug(
-            model_path='bert-base-uncased', action="insert"),
-    ]
     aug = random.choices(tuples, weights=(60, 10, 10, 10, 10), k=1)[0]
 
     if aug is None:
