@@ -7,7 +7,18 @@ from datasets import load_dataset, Dataset
 from transformers import BertTokenizer
 
 logging.disable(logging.INFO)  # disable INFO and DEBUG logger everywhere
-tuples = [None]
+tuples = [
+    None,
+    naw.SynonymAug(aug_src='wordnet'),
+    naw.ContextualWordEmbsAug(
+        model_path='distilbert-base-uncased', action="substitute", device="cuda"),
+    # naw.RandomWordAug(action='crop'),
+    # naw.RandomWordAug(),
+    naw.ContextualWordEmbsAug(
+        model_path='roberta-base', action="substitute", device="cuda"),
+    naw.ContextualWordEmbsAug(
+        model_path='bert-base-uncased', action="insert", device="cuda"),
+]
 
 
 def get_snli_dataset() -> Union:
@@ -85,20 +96,6 @@ def get_pedia_classes() -> Dataset:
 
 def preprocess_datasets(tokenizer: BertTokenizer, data_set: Dataset, device) -> Dataset:
     print("Preprocess the data")
-    global tuples
-    tuples = [
-        None,
-        naw.SynonymAug(aug_src='wordnet'),
-        naw.ContextualWordEmbsAug(
-            model_path='distilbert-base-uncased', action="substitute", device=device),
-        # naw.RandomWordAug(action='crop'),
-        # naw.RandomWordAug(),
-        naw.ContextualWordEmbsAug(
-            model_path='roberta-base', action="substitute", device=device),
-        naw.ContextualWordEmbsAug(
-            model_path='bert-base-uncased', action="insert", device=device),
-    ]
-
     data_set = data_set.map(augment_dataset, batched=True)
 
     data_set = data_set.map(
