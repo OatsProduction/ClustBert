@@ -94,7 +94,7 @@ def get_pedia_classes() -> Dataset:
     return dataset
 
 
-def preprocess_datasets(tokenizer: BertTokenizer, data_set: Dataset, device) -> Dataset:
+def preprocess_datasets(tokenizer: BertTokenizer, data_set: Dataset) -> Dataset:
     print("Preprocess the data")
     data_set = data_set.map(augment_dataset, batched=True)
 
