@@ -30,13 +30,13 @@ def start_train(config=None):
         wandb.watch(clust_bert)
 
     big_train_dataset = DataSetUtils.get_million_headlines().shuffle(seed=525)
-    big_train_dataset = big_train_dataset.select(range(1, 10000))
+    big_train_dataset = big_train_dataset.select(range(1, 100000))
 
-    # if not args.wandb:
-    #     score = eval_loop(clust_bert, device)
-    #     wandb.log({
-    #         "cr_score": score
-    #     })
+    if not args.wandb:
+        score = eval_loop(clust_bert, device)
+        wandb.log({
+            "cr_score": score
+        })
 
     for epoch in range(0, config.epochs):
         print("Loop in Epoch: " + str(epoch))
