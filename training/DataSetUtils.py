@@ -20,6 +20,7 @@ tuples = [
         model_path='bert-base-uncased', action="insert", device="cuda"),
 ]
 
+
 def get_snli_dataset() -> Union:
     print("Getting the SNLI datasets")
     train = load_dataset('snli', split='train')
@@ -99,7 +100,7 @@ def preprocess_datasets(tokenizer: BertTokenizer, data_set: Dataset) -> Dataset:
 
     data_set = data_set.map(
         lambda data_point: tokenizer(data_point['text'], padding=True, truncation=True),
-        batched=True, num_proc=16)
+        batched=True)
 
     if 'labels' in data_set:
         data_set.set_format("torch", columns=['input_ids', 'token_type_ids', 'attention_mask', 'labels'])
