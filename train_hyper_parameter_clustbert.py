@@ -18,7 +18,7 @@ def start_train(config=None):
         wandb.init(config=config)
         wandb.config.update(config)
         config = wandb.config
-        wandb.run.name = "crop_" + str(config.random_crop_size) + "_lr" + str(config.learning_rate) + "_k" + str(
+        wandb.run.name = "_lr" + str(config.learning_rate) + "_k" + str(
             config.k) + "_epoch" + str(config.epochs) + "_" + wandb.run.id
 
     device = torch.device("cuda:0")
