@@ -11,13 +11,13 @@ tuples = [
     None,
     naw.SynonymAug(aug_src='wordnet'),
     naw.ContextualWordEmbsAug(
-        model_path='distilbert-base-uncased', action="substitute"),
+        model_path='distilbert-base-uncased', action="substitute", device="cuda"),
     # naw.RandomWordAug(action='crop'),
     # naw.RandomWordAug(),
     naw.ContextualWordEmbsAug(
-        model_path='roberta-base', action="substitute"),
+        model_path='roberta-base', action="substitute", device="cuda"),
     naw.ContextualWordEmbsAug(
-        model_path='bert-base-uncased', action="insert"),
+        model_path='bert-base-uncased', action="insert", device="cuda"),
 ]
 
 def get_snli_dataset() -> Union:
@@ -95,7 +95,7 @@ def get_pedia_classes() -> Dataset:
 
 def preprocess_datasets(tokenizer: BertTokenizer, data_set: Dataset) -> Dataset:
     print("Preprocess the data")
-    data_set = data_set.map(augment_dataset, num_proc=32)
+    data_set = data_set.map(augment_dataset, batched=True)
 
     data_set = data_set.map(
         lambda data_point: tokenizer(data_point['text'], padding=True, truncation=True),
