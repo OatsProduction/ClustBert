@@ -74,11 +74,11 @@ def start_train(config=None):
 
     if not args.wandb:
         sts_result = get_sts_from_json(result)
-        my_table = wandb.Table(columns=sts, data=sts_result)
+        my_table = wandb.Table(columns=sts, data=[sts_result])
         wandb.log({"STS": my_table})
 
         senteval_result = get_senteval_from_json(result)
-        my_table = wandb.Table(columns=senteval_tasks, data=senteval_result)
+        my_table = wandb.Table(columns=senteval_tasks, data=[senteval_result])
         wandb.log({"SentEval": my_table})
 
 
