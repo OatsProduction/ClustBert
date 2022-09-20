@@ -73,12 +73,12 @@ def start_train(config=None):
     result = evaluate_model(clust_bert.model, sts + senteval_tasks, config.senteval_path)
 
     if not args.wandb:
-        sts_result = get_sts_from_json(result)
-        my_table = wandb.Table(columns=sts, data=[sts_result])
+        sts_result = [wandb.run.name] + get_sts_from_json(result)
+        my_table = wandb.Table(columns=["Id"] + sts, data=[sts_result])
         wandb.log({"STS": my_table})
 
-        senteval_result = get_senteval_from_json(result)
-        my_table = wandb.Table(columns=senteval_tasks, data=[senteval_result])
+        senteval_result = [wandb.run.name] + get_senteval_from_json(result)
+        my_table = wandb.Table(columns=["Id"] + senteval_tasks, data=[senteval_result])
         wandb.log({"SentEval": my_table})
 
 

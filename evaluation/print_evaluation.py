@@ -9,7 +9,7 @@ def get_sts_from_json(json) -> list:
     result = []
 
     for test in sts:
-        result.append(str(json[test]["all"]["pearson"]["mean"]))
+        result.append(str(round(json[test]["all"]["pearson"]["mean"], 2)))
 
     return result
 

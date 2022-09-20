@@ -10,11 +10,12 @@ if __name__ == '__main__':
 
     f = open("bert/random_evaluation_results.json")
     result = json.load(f)
+    run_name = "l_4_test_me"
 
-    sts_result = get_sts_from_json(result)
-    my_table = wandb.Table(columns=sts, data=[sts_result])
+    sts_result = [run_name] + get_sts_from_json(result)
+    my_table = wandb.Table(columns=["Id"] + sts, data=[sts_result])
     wandb.log({"STS": my_table})
 
-    senteval_result = get_senteval_from_json(result)
-    my_table = wandb.Table(columns=senteval_tasks, data=[senteval_result])
+    senteval_result = [run_name] + get_senteval_from_json(result)
+    my_table = wandb.Table(columns=["Id"] + senteval_tasks, data=[senteval_result])
     wandb.log({"SentEval": my_table})
