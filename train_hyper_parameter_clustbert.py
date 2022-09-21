@@ -60,7 +60,7 @@ def start_train(config=None):
         data_collator = DataCollatorWithPadding(tokenizer=clust_bert.tokenizer)
 
         train_dataloader = DataLoader(
-            pseudo_label_data, batch_size=32, sampler=sampler, collate_fn=data_collator
+            pseudo_label_data, batch_size=2, sampler=sampler, collate_fn=data_collator
         )
 
         loss = train_loop(clust_bert, train_dataloader, device, config)
