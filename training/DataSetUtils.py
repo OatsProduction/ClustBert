@@ -41,10 +41,16 @@ def get_snli_dataset() -> Union:
 
 def get_million_headlines() -> Dataset:
     dataset = load_dataset("DeveloperOats/Million_News_Headlines")
+    dataset = dataset.select(range(1, 100000))
     dataset = dataset.rename_column("headline_text", "text")
     dataset = dataset.remove_columns("publish_date")
     dataset = dataset["train"]
 
+    return dataset
+
+
+def get_imdb() -> Dataset:
+    dataset = load_dataset("imdb")
     return dataset
 
 

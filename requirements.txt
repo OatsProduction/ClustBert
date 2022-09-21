@@ -1,0 +1,11 @@
+numpy
+torch
+sklearn
+nltk
+datasets
+transformers
+pytorch_lightning
+wandb
+requests
+nlpaug
+-e git+https://github.com/facebookresearch/SentEval#egg=senteval

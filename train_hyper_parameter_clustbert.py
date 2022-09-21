@@ -22,15 +22,14 @@ def start_train(config=None):
         wandb.run.name = "_lr" + str(config.learning_rate) + "_k" + str(
             config.k) + "_epoch" + str(config.epochs) + "_" + wandb.run.id
 
-    device = torch.device("cuda:0")
+    device = torch.device("cuda:1")
 
     clust_bert = ClustBERT(config.k)
     clust_bert.to(device)
     if not args.wandb:
         wandb.watch(clust_bert)
 
-    big_train_dataset = DataSetUtils.get_million_headlines().shuffle(seed=525)
-    big_train_dataset = big_train_dataset.select(range(1, 100000))
+    big_train_dataset = DataSetUtils.get_imdb().shuffle(seed=525)
 
     if not args.wandb:
         score = eval_loop(clust_bert, device)

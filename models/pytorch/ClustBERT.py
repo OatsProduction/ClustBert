@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 from datasets import Dataset
 from sklearn.cluster import MiniBatchKMeans
+from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
 from torch import Tensor
 from transformers import BertTokenizer, BertModel, BertConfig
@@ -23,6 +24,7 @@ class ClustBERT(nn.Module):
         config = BertConfig.from_pretrained("bert-base-cased", output_hidden_states=True)
         self.model = BertModel(config)
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
+        self.loss = nn.CrossEntropyLoss()
 
         self.num_labels = k
         self.dropout = nn.Dropout(0.1)
@@ -53,8 +55,7 @@ class ClustBERT(nn.Module):
 
         loss = None
         if labels is not None:
-            loss_fct = nn.CrossEntropyLoss()
-            loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+            loss = self.loss(logits.view(-1, self.num_labels), labels.view(-1))
 
         return TokenClassifierOutput(loss=loss, logits=logits, hidden_states=outputs.hidden_states,
                                      attentions=outputs.attentions)
@@ -80,6 +81,9 @@ class ClustBERT(nn.Module):
 
         sentence_embedding = self.get_sentence_vectors_with_cls_token(device, data)
         X = [sentence.cpu().detach().numpy() for sentence in sentence_embedding]
+        pca = PCA(n_components=100)
+        X = pca.fit_transform(X)
+
         pseudo_labels = self.clustering.fit_predict(X)
 
         silhouette = silhouette_score(X, pseudo_labels)
