@@ -95,8 +95,9 @@ class ClustBERT(nn.Module):
     def get_sentence_vectors_with_cls_token(self, device, texts: Dataset):
         lists = []
         for text in texts:
-            lists.append(self.get_sentence_vector_with_cls_token(device, text["input_ids"], text['token_type_ids'],
-                                                                 text['attention_mask']))
+            embedding = self.get_sentence_vector_with_cls_token(device, text["input_ids"], text['token_type_ids'],
+                                                                text['attention_mask'])
+            lists.append(embedding.cpu().detach())
         return lists
 
     def get_sentence_vectors_with_token_average(self, device, texts: Dataset):
