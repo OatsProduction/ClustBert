@@ -3,6 +3,7 @@ import logging
 
 import torch
 import wandb
+from sklearn.metrics.cluster import normalized_mutual_info_score
 from torch import nn
 from torch.utils.data import DataLoader
 from transformers import DataCollatorWithPadding
@@ -22,7 +23,7 @@ def start_train(config=None):
         wandb.run.name = "_lr" + str(config.learning_rate) + "_k" + str(
             config.k) + "_epoch" + str(config.epochs) + "_" + wandb.run.id
 
-    device = torch.device("cuda:1")
+    device = torch.device("cuda:0")
 
     clust_bert = ClustBERT(config.k)
     clust_bert.to(device)
@@ -43,6 +44,7 @@ def start_train(config=None):
         pre_processed_dataset = DataSetUtils.preprocess_datasets(clust_bert.tokenizer, big_train_dataset)
 
         pseudo_label_data, silhouette = clust_bert.cluster_and_generate(pre_processed_dataset, device)
+        nmi = normalized_mutual_info_score(big_train_dataset["original_label"], pseudo_label_data["labels"])
 
         wandb_dic = generate_clustering_statistic(clust_bert, pseudo_label_data)
         clust_bert.classifier = None
@@ -67,6 +69,7 @@ def start_train(config=None):
             wandb_dic["loss"] = loss
             wandb_dic["silhouette"] = silhouette
             wandb_dic["cr_score"] = score
+            wandb_dic["nmi"] = nmi
             wandb.log(wandb_dic)
 
     result = evaluate_model(clust_bert.model, sts + senteval_tasks, config.senteval_path)

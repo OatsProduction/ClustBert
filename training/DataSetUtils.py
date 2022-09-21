@@ -51,6 +51,9 @@ def get_million_headlines() -> Dataset:
 
 def get_imdb() -> Dataset:
     dataset = load_dataset("imdb")
+    dataset = dataset["train"]
+    dataset = dataset.rename_column("label", "original_label")
+
     return dataset
 
 

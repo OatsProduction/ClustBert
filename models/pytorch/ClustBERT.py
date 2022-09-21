@@ -29,7 +29,7 @@ class ClustBERT(nn.Module):
         self.num_labels = k
         self.dropout = nn.Dropout(0.1)
         self.classifier = nn.Linear(768, self.num_labels)  # load and initialize weights
-        self.kmeans_batch_size = 100 * 1024
+        self.kmeans_batch_size = 5 * 1024
         self.clustering = MiniBatchKMeans(
             self.num_labels,
             batch_size=self.kmeans_batch_size,
