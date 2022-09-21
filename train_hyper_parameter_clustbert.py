@@ -24,6 +24,7 @@ def start_train(config=None):
             config.k) + "_epoch" + str(config.epochs) + "_" + wandb.run.id
 
     device = torch.device("cuda:0")
+    torch.cuda.empty_cache()
 
     clust_bert = ClustBERT(config.k)
     clust_bert.to(device)

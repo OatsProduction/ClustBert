@@ -93,8 +93,11 @@ class ClustBERT(nn.Module):
         return data, silhouette
 
     def get_sentence_vectors_with_cls_token(self, device, texts: Dataset):
-        return [self.get_sentence_vector_with_cls_token(device, text["input_ids"], text['token_type_ids'],
-                                                        text['attention_mask']) for text in texts]
+        lists = []
+        for text in texts:
+            lists.append(self.get_sentence_vector_with_cls_token(device, text["input_ids"], text['token_type_ids'],
+                                                                 text['attention_mask']))
+        return lists
 
     def get_sentence_vectors_with_token_average(self, device, texts: Dataset):
         return [self.get_sentence_vector_with_token_average(device, text["input_ids"], text['token_type_ids'],

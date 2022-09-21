@@ -34,7 +34,7 @@ def train_loop(model, train_dataloader: DataLoader, device, config=None):
     lr_scheduler = get_scheduler(
         "linear",
         optimizer=optimizer,
-        num_warmup_steps=0,
+        num_warmup_steps=len(train_dataloader) / 100,
         num_training_steps=len(train_dataloader)
     )
 

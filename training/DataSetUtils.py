@@ -105,7 +105,8 @@ def get_pedia_classes() -> Dataset:
 
 def preprocess_datasets(tokenizer: BertTokenizer, data_set: Dataset) -> Dataset:
     print("Preprocess the data")
-    new_dataset = data_set.map(augment_dataset, batched=True)
+    # new_dataset = data_set.map(augment_dataset, batched=True)
+    new_dataset = data_set
 
     new_dataset = new_dataset.map(
         lambda data_point: tokenizer(data_point['text'], padding=True, truncation=True),
