@@ -68,7 +68,7 @@ def start_train(config=None):
             wandb_dic["cr_score"] = score
             wandb.log(wandb_dic)
 
-    result = evaluate_model(clust_bert.model, sts + senteval_tasks, config.senteval_path)
+    result = evaluate_model(clust_bert.model.bert, sts + senteval_tasks, config.senteval_path)
 
     if not args.wandb:
         sts_result = [wandb.run.name] + get_sts_from_json(result)
