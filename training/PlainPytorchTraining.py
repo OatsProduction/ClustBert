@@ -95,7 +95,7 @@ def eval_loop(clust_bert, old_device):
     clust_bert.to(torch.device("cpu"))
 
     params = {
-        'model': clust_bert.model,
+        'model': clust_bert.model.bert,
         'tokenizer': BertTokenizer.from_pretrained("bert-base-cased"),
         'task_path': "../SentEval/data",
         'usepytorch': True,
