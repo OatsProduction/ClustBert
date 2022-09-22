@@ -1,5 +1,6 @@
 numpy
 torch
+tqdm
 sklearn
 nltk
 datasets

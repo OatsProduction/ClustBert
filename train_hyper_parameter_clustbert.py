@@ -3,7 +3,6 @@ import logging
 
 import torch
 import wandb
-from sklearn.metrics.cluster import normalized_mutual_info_score
 from torch import nn
 from torch.utils.data import DataLoader
 from transformers import DataCollatorWithPadding
@@ -12,7 +11,7 @@ from evaluation.evaluate_model import evaluate_model, sts, senteval_tasks
 from evaluation.print_evaluation import get_senteval_from_json, get_sts_from_json
 from models.pytorch.ClustBERT import ClustBERT
 from training import DataSetUtils
-from training.PlainPytorchTraining import train_loop, eval_loop, generate_clustering_statistic, UnifLabelSampler
+from training.PlainPytorchTraining import train_loop, eval_loop, UnifLabelSampler
 
 
 def start_train(config=None):
@@ -26,7 +25,7 @@ def start_train(config=None):
     device = torch.device("cuda:1")
     torch.cuda.empty_cache()
 
-    clust_bert = ClustBERT(config.k)
+    clust_bert = ClustBERT(config.k, "seq")
     clust_bert.to(device)
     if not args.wandb:
         wandb.watch(clust_bert)
@@ -44,10 +43,8 @@ def start_train(config=None):
         big_train_dataset = big_train_dataset.shuffle(seed=epoch)
         pre_processed_dataset = DataSetUtils.preprocess_datasets(clust_bert.tokenizer, big_train_dataset)
 
-        pseudo_label_data, silhouette = clust_bert.cluster_and_generate(pre_processed_dataset, device)
-        nmi = normalized_mutual_info_score(big_train_dataset["original_label"], pseudo_label_data["labels"])
+        pseudo_label_data, wandb_dic = clust_bert.cluster_and_generate(pre_processed_dataset, device)
 
-        wandb_dic = generate_clustering_statistic(clust_bert, pseudo_label_data)
         clust_bert.classifier = None
         clust_bert.classifier = nn.Linear(768, clust_bert.num_labels)
         clust_bert.to(device)
@@ -60,7 +57,7 @@ def start_train(config=None):
         data_collator = DataCollatorWithPadding(tokenizer=clust_bert.tokenizer)
 
         train_dataloader = DataLoader(
-            pseudo_label_data, batch_size=2, sampler=sampler, collate_fn=data_collator
+            pseudo_label_data, batch_size=8, sampler=sampler, collate_fn=data_collator
         )
 
         loss = train_loop(clust_bert, train_dataloader, device, config)
@@ -68,9 +65,7 @@ def start_train(config=None):
 
         if not args.wandb:
             wandb_dic["loss"] = loss
-            wandb_dic["silhouette"] = silhouette
             wandb_dic["cr_score"] = score
-            wandb_dic["nmi"] = nmi
             wandb.log(wandb_dic)
 
     result = evaluate_model(clust_bert.model, sts + senteval_tasks, config.senteval_path)

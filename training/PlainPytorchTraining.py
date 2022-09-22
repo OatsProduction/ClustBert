@@ -6,8 +6,6 @@ from torch.optim import AdamW
 from torch.utils.data import DataLoader, Sampler
 from transformers import get_scheduler, BertTokenizer
 
-from models.pytorch.ClustBERT import ClustBERT
-
 training_stats = []
 accuracy = 0
 
@@ -30,11 +28,11 @@ def batcher(params, batch):
 def train_loop(model, train_dataloader: DataLoader, device, config=None):
     learning_rate = 3e-5 if config is None or config.learning_rate is None else config.learning_rate
 
-    optimizer = AdamW(model.parameters(), learning_rate)
+    optimizer = AdamW(model.parameters(), lr=learning_rate, eps=1e-8)
     lr_scheduler = get_scheduler(
         "linear",
         optimizer=optimizer,
-        num_warmup_steps=len(train_dataloader) / 100,
+        num_warmup_steps=0,
         num_training_steps=len(train_dataloader)
     )
 
@@ -43,11 +41,21 @@ def train_loop(model, train_dataloader: DataLoader, device, config=None):
 
     for batch in train_dataloader:
         batch = {k: v.to(device) for k, v in batch.items()}
-        outputs = model(**batch)
+        model.zero_grad()
+
+        b_input_ids = batch["input_ids"]
+        b_input_mask = batch["attention_mask"]
+        b_labels = batch["labels"]
+
+        outputs = model(b_input_ids,
+                        token_type_ids=None,
+                        attention_mask=b_input_mask,
+                        labels=b_labels)
         loss = outputs.loss
         total_train_loss += loss.item()
-        loss.backward()
 
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        loss.backward()
         optimizer.step()
         lr_scheduler.step()
         optimizer.zero_grad()
@@ -55,7 +63,7 @@ def train_loop(model, train_dataloader: DataLoader, device, config=None):
     return total_train_loss / len(train_dataloader)
 
 
-def generate_clustering_statistic(clust_bert: ClustBERT, dataset: Dataset) -> dict:
+def generate_clustering_statistic(dataset: Dataset) -> dict:
     labels = dataset["labels"]
     result = torch.bincount(labels)
     amount_in_max_cluster = torch.max(result)

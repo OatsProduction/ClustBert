@@ -8,57 +8,59 @@ import torch
 import torch.nn as nn
 from datasets import Dataset
 from sklearn.cluster import MiniBatchKMeans
-from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
+from sklearn.metrics.cluster import normalized_mutual_info_score
 from torch import Tensor
-from transformers import BertTokenizer, BertModel, BertConfig
-from transformers.modeling_outputs import TokenClassifierOutput
+from tqdm import tqdm
+from transformers import BertTokenizer, BertModel, BertConfig, BertForSequenceClassification
 from transformers.modeling_utils import no_init_weights
+
+from training.PlainPytorchTraining import generate_clustering_statistic
 
 
 class ClustBERT(nn.Module):
 
-    def __init__(self, k: int):
+    def __init__(self, k: int, state="random"):
         super(ClustBERT, self).__init__()
-        no_init_weights(True)
-        config = BertConfig.from_pretrained("bert-base-cased", output_hidden_states=True)
-        self.model = BertModel(config)
+        if state is "random":
+            no_init_weights(True)
+            config = BertConfig.from_pretrained("bert-base-cased", output_hidden_states=True)
+            self.model = BertModel(config)
+        elif state is "bert":
+            self.model = BertModel.from_pretrained("bert-base-cased")
+        else:
+            config = BertConfig.from_pretrained("bert-base-cased", num_labels=k,
+                                                problem_type="single_label_classification")
+            self.model = BertForSequenceClassification(config=config)
+
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
         self.loss = nn.CrossEntropyLoss()
 
         self.num_labels = k
         self.dropout = nn.Dropout(0.1)
         self.classifier = nn.Linear(768, self.num_labels)  # load and initialize weights
-        self.kmeans_batch_size = 5 * 1024
+        self.kmeans_batch_size = 6 * 1024
         self.clustering = MiniBatchKMeans(
             self.num_labels,
             batch_size=self.kmeans_batch_size,
         )
 
-    # def __init__(self, config):
-    #     super(ClustBERT, self).__init__()
-    #     self.model = BertModel.from_pretrained("bert-base-cased", output_hidden_states=True)
-    #     self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
-    #
-    #     self.num_labels = config.k
-    #     self.dropout = nn.Dropout(0.1)
-    #     self.classifier = nn.Linear(768, self.num_labels)  # load and initialize weights
-    #     self.clustering = KMeans(self.num_labels)
-
     def forward(self, input_ids=None, token_type_ids=None, attention_mask=None, labels=None):
         # Extract outputs from the body
-        outputs = self.model(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask)
+        return self.model(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask,
+                          labels=labels)
 
-        # Add custom layers
-        sequence_output = self.dropout(outputs[0])  # outputs[0]=last hidden state
-        logits = self.classifier(sequence_output[:, 0, :].view(-1, 768))  # calculate losses
-
-        loss = None
-        if labels is not None:
-            loss = self.loss(logits.view(-1, self.num_labels), labels.view(-1))
-
-        return TokenClassifierOutput(loss=loss, logits=logits, hidden_states=outputs.hidden_states,
-                                     attentions=outputs.attentions)
+    #     outputs = self.model(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask)
+    #
+    #     # Add custom layers
+    #     sequence_output = self.dropout(outputs[0])  # outputs[0]=last hidden state
+    #     logits = self.classifier(sequence_output[:, 0, :].view(-1, 768))  # calculate losses
+    #
+    #     loss = None
+    #     if labels is not None:
+    #         loss = self.loss(logits, labels)
+    #
+    #     return logits, loss
 
     def preprocess_datasets(self, data_set: Dataset) -> Dataset:
         print("Preprocess the data")
@@ -70,7 +72,7 @@ class ClustBERT(nn.Module):
         print("Finished the Preprocess the data")
         return data_set
 
-    def cluster_and_generate(self, data: Dataset, device) -> Tuple[Dataset, float]:
+    def cluster_and_generate(self, data: Dataset, device) -> Tuple[Dataset, dict]:
         print("Start Step 1 --- Clustering")
         t0 = time()
         self.clustering = MiniBatchKMeans(
@@ -79,22 +81,29 @@ class ClustBERT(nn.Module):
         )
         self.model.eval()
 
+        print("Creating sentence embeddings")
         sentence_embedding = self.get_sentence_vectors_with_cls_token(device, data)
         X = [sentence.cpu().detach().numpy() for sentence in sentence_embedding]
-        pca = PCA(n_components=100)
-        X = pca.fit_transform(X)
+        # pca = PCA(n_components=100)
+        # X = pca.fit_transform(X)
 
         pseudo_labels = self.clustering.fit_predict(X)
-
-        silhouette = silhouette_score(X, pseudo_labels)
         data = data.map(lambda example, idx: {"labels": pseudo_labels[idx]}, with_indices=True)
 
+        dic = generate_clustering_statistic(data)
+
+        silhouette = silhouette_score(X, pseudo_labels)
+        nmi = normalized_mutual_info_score(data["original_label"], pseudo_labels)
+
+        dic["nmi"] = nmi
+        dic["silhouette"] = silhouette
+
         print("Finished Step 1 --- Clustering in %0.3fs" % (time() - t0))
-        return data, silhouette
+        return data, dic
 
     def get_sentence_vectors_with_cls_token(self, device, texts: Dataset):
         lists = []
-        for text in texts:
+        for text in tqdm(texts):
             embedding = self.get_sentence_vector_with_cls_token(device, text["input_ids"], text['token_type_ids'],
                                                                 text['attention_mask'])
             lists.append(embedding.cpu().detach())
@@ -116,14 +125,12 @@ class ClustBERT(nn.Module):
 
     def get_sentence_vector_with_cls_token(self, device, tokens: Tensor, token_type_ids=None, attention_mask=None):
         with torch.no_grad():
-            out = self.model(input_ids=tokens.unsqueeze(0).to(device=device),
-                             token_type_ids=token_type_ids.unsqueeze(0).to(device=device),
-                             attention_mask=attention_mask.unsqueeze(0).to(device=device))
+            out = self.model.bert(input_ids=tokens.unsqueeze(0).to(device=device),
+                                  token_type_ids=token_type_ids.unsqueeze(0).to(device=device),
+                                  attention_mask=attention_mask.unsqueeze(0).to(device=device))
 
-        y = out[0]  # outputs[0]=last hidden state
-        y = y[:, 0, :]
+        y = out.pooler_output
         y = y.squeeze(0)
-
         return y
 
     def save(self):
