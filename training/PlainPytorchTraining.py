@@ -4,6 +4,7 @@ import torch
 from datasets import Dataset
 from torch.optim import AdamW
 from torch.utils.data import DataLoader, Sampler
+from tqdm import tqdm
 from transformers import get_scheduler, BertTokenizer
 
 training_stats = []
@@ -39,7 +40,7 @@ def train_loop(model, train_dataloader: DataLoader, device, config=None):
     model.train()
     total_train_loss = 0
 
-    for batch in train_dataloader:
+    for batch in tqdm(train_dataloader):
         batch = {k: v.to(device) for k, v in batch.items()}
         model.zero_grad()
 
