@@ -19,11 +19,9 @@ def batcher(params, batch):
     sentences = [" ".join(s).lower() for s in batch]
 
     with torch.no_grad():
-        y = params['tokenizer'](sentences, padding=True, truncation=True, return_tensors="pt")["input_ids"]
-        y = params['model'](y)[0]
-        y = y[:, 0, :].view(-1, 768)
-
-    return y
+        y = params['tokenizer'](sentences, padding=True, truncation=True, return_tensors="pt")
+        y = params['model'].get_sentence_vectors_with_cls_token(params["device"], [y.data])
+    return y[0]
 
 
 def train_loop(model, train_dataloader: DataLoader, device, config=None):
@@ -40,6 +38,7 @@ def train_loop(model, train_dataloader: DataLoader, device, config=None):
     model.train()
     total_train_loss = 0
 
+    print("Start with Training")
     for batch in tqdm(train_dataloader):
         batch = {k: v.to(device) for k, v in batch.items()}
         model.zero_grad()
@@ -84,21 +83,18 @@ def generate_clustering_statistic(dataset: Dataset) -> dict:
     }
 
 
-def get_normal_sample_pseudolabels(dataset: Dataset, num_labels: int, random_crop_size: int):
-    dataset = dataset.select(range(1, random_crop_size))
-    return dataset
-
-
 def eval_loop(clust_bert, old_device):
     clust_bert.eval()
     for param in clust_bert.parameters():
         param.requires_grad = False
-    clust_bert.to(torch.device("cpu"))
+    dev = torch.device("cpu")
+    clust_bert.to(dev)
 
     params = {
-        'model': clust_bert.model.bert,
+        'model': clust_bert,
         'tokenizer': BertTokenizer.from_pretrained("bert-base-cased"),
         'task_path': "../SentEval/data",
+        "device": dev,
         'usepytorch': True,
         'classifier': {
             'nhid': 0,

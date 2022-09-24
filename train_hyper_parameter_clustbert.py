@@ -31,8 +31,12 @@ def start_train(config=None):
         wandb.watch(clust_bert)
 
     big_train_dataset = DataSetUtils.get_imdb().shuffle(seed=525)
+    big_train_dataset = big_train_dataset.select(range(1, 100))
 
     if not args.wandb:
+        columns = ["Epoch", "Texts", "Cluster"]
+        table = wandb.Table(columns=columns)
+
         score = eval_loop(clust_bert, device)
         wandb.log({
             "cr_score": score
@@ -43,7 +47,7 @@ def start_train(config=None):
         big_train_dataset = big_train_dataset.shuffle(seed=epoch)
         pre_processed_dataset = DataSetUtils.preprocess_datasets(clust_bert.tokenizer, big_train_dataset)
 
-        pseudo_label_data, wandb_dic = clust_bert.cluster_and_generate(pre_processed_dataset, device)
+        pseudo_label_data, wandb_dic = clust_bert.cluster_and_generate(pre_processed_dataset, device, table, epoch)
 
         clust_bert.classifier = None
         clust_bert.classifier = nn.Linear(768, clust_bert.num_labels)
@@ -57,7 +61,7 @@ def start_train(config=None):
         data_collator = DataCollatorWithPadding(tokenizer=clust_bert.tokenizer)
 
         train_dataloader = DataLoader(
-            pseudo_label_data, batch_size=8, sampler=sampler, collate_fn=data_collator
+            pseudo_label_data, batch_size=2, sampler=sampler, collate_fn=data_collator
         )
 
         loss = train_loop(clust_bert, train_dataloader, device, config)
@@ -68,9 +72,11 @@ def start_train(config=None):
             wandb_dic["cr_score"] = score
             wandb.log(wandb_dic)
 
-    result = evaluate_model(clust_bert.model.bert, sts + senteval_tasks, config.senteval_path)
+    result = evaluate_model(clust_bert, sts + senteval_tasks, config.senteval_path)
 
     if not args.wandb:
+        wandb.log({"Example-Texts": table})
+
         sts_result = [wandb.run.name] + get_sts_from_json(result)
         my_table = wandb.Table(columns=["Id"] + sts, data=[sts_result])
         wandb.log({"STS": my_table})

@@ -1,11 +1,15 @@
 import os
 import pickle
+import random
 from datetime import datetime
 from time import time
 from typing import Tuple
 
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
+import umap
+import umap.plot
 from datasets import Dataset
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics import silhouette_score
@@ -72,7 +76,7 @@ class ClustBERT(nn.Module):
         print("Finished the Preprocess the data")
         return data_set
 
-    def cluster_and_generate(self, data: Dataset, device) -> Tuple[Dataset, dict]:
+    def cluster_and_generate(self, data: Dataset, device, table, epoch: int) -> Tuple[Dataset, dict]:
         print("Start Step 1 --- Clustering")
         t0 = time()
         self.clustering = MiniBatchKMeans(
@@ -84,19 +88,31 @@ class ClustBERT(nn.Module):
         print("Creating sentence embeddings")
         sentence_embedding = self.get_sentence_vectors_with_cls_token(device, data)
         X = [sentence.cpu().detach().numpy() for sentence in sentence_embedding]
-        # pca = PCA(n_components=100)
-        # X = pca.fit_transform(X)
 
         pseudo_labels = self.clustering.fit_predict(X)
         data = data.map(lambda example, idx: {"labels": pseudo_labels[idx]}, with_indices=True)
 
+        standard_embedding = umap.UMAP().fit_transform(X)
+
+        indicies = []
+        for k in range(self.num_labels):
+            results = [idx for idx, t in enumerate(pseudo_labels) if t == k]
+            indicies.append(results)
+
+        for idx, idx_list in enumerate(indicies):
+            x = standard_embedding[:, 0][idx_list]
+            y = standard_embedding[:, 1][idx_list]
+            plt.plot(x, y, 'o', label=str(idx))
+
+            if table is not None:
+                results = data.select(idx_list)["text"]
+                results = random.choices(results, k=5)
+                table.add_data(str(epoch), results, str(idx))
+
         dic = generate_clustering_statistic(data)
-
-        silhouette = silhouette_score(X, pseudo_labels)
-        nmi = normalized_mutual_info_score(data["original_label"], pseudo_labels)
-
-        dic["nmi"] = nmi
-        dic["silhouette"] = silhouette
+        dic["UMAP-Pseudo-Labels"] = plt
+        dic["nmi"] = normalized_mutual_info_score(data["original_label"], pseudo_labels)
+        dic["silhouette"] = silhouette_score(X, pseudo_labels)
 
         print("Finished Step 1 --- Clustering in %0.3fs" % (time() - t0))
         return data, dic
@@ -125,9 +141,18 @@ class ClustBERT(nn.Module):
 
     def get_sentence_vector_with_cls_token(self, device, tokens: Tensor, token_type_ids=None, attention_mask=None):
         with torch.no_grad():
-            out = self.model.bert(input_ids=tokens.unsqueeze(0).to(device=device),
-                                  token_type_ids=token_type_ids.unsqueeze(0).to(device=device),
-                                  attention_mask=attention_mask.unsqueeze(0).to(device=device))
+            if len(tokens.shape) is 1:
+                tokens = tokens.unsqueeze(0)
+                token_type_ids = token_type_ids.unsqueeze(0)
+                attention_mask = attention_mask.unsqueeze(0)
+
+        input_ids = tokens.to(device=device)
+        token_type_ids = token_type_ids.to(device=device)
+        attention_mask = attention_mask.to(device=device)
+
+        out = self.model.bert(input_ids=input_ids,
+                              token_type_ids=token_type_ids,
+                              attention_mask=attention_mask)
 
         y = out.pooler_output
         y = y.squeeze(0)

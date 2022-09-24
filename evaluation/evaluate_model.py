@@ -17,13 +17,9 @@ def batcher(params, batch):
     sentences = [" ".join(s).lower() for s in batch]
 
     with torch.no_grad():
-        # y = torch.rand(len(sentences), 768)
-        y = params['tokenizer'](sentences, max_length=512, padding=True, truncation=True, return_tensors="pt")[
-            "input_ids"]
-        y = params['model'](y)[0]
-        y = y[:, 0, :].view(-1, 768)
-
-    return y
+        y = params['tokenizer'](sentences, padding=True, truncation=True, return_tensors="pt")
+        y = params['model'].get_sentence_vectors_with_cls_token(params["device"], [y.data])
+    return y[0]
 
 
 # Set up logger

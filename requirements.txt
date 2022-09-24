@@ -3,6 +3,10 @@ torch
 tqdm
 sklearn
 nltk
+umap-learn[plot]
+datashader
+matplotlib
+plotly
 datasets
 transformers
 pytorch_lightning
