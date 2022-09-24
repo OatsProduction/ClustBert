@@ -31,7 +31,6 @@ def start_train(config=None):
         wandb.watch(clust_bert)
 
     big_train_dataset = DataSetUtils.get_imdb().shuffle(seed=525)
-    big_train_dataset = big_train_dataset.select(range(1, 100))
 
     if not args.wandb:
         columns = ["Epoch", "Texts", "Cluster"]
