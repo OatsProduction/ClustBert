@@ -32,12 +32,15 @@ def evaluate_model(transformer, tasks, senteval_path):
     transformer.eval()
     for parameter in transformer.parameters():
         parameter.requires_grad = False
-    transformer.to(torch.device("cpu"))
+
+    dev = torch.device("cpu")
+    transformer.to(dev)
 
     params = {
         'model': transformer,
         'tokenizer': BertTokenizer.from_pretrained("bert-base-cased"),
         'task_path': senteval_path,
+        "device": dev,
         'usepytorch': True,
         'kfold': 10,
         'classifier': {
