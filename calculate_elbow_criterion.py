@@ -23,7 +23,7 @@ if __name__ == '__main__':
     dataset = dataset.select(range(1, 100000))
     dataset = DataSetUtils.preprocess_datasets(clust_bert.tokenizer, dataset)
 
-    sentence_embedding = clust_bert.get_sentence_embedding(device, dataset)
+    sentence_embedding = clust_bert.get_sentence_embeddings(device, dataset)
     X = [sentence.cpu().detach().numpy() for sentence in sentence_embedding]
 
     for k in range(1, 10000):

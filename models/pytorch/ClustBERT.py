@@ -91,7 +91,7 @@ class ClustBERT(nn.Module):
         self.model.eval()
 
         print("Creating sentence embeddings")
-        sentence_embedding = self.get_sentence_embedding(device, data)
+        sentence_embedding = self.get_sentence_embeddings(device, data)
         X = [sentence.cpu().detach().numpy() for sentence in sentence_embedding]
 
         pseudo_labels = self.clustering.fit_predict(X)
@@ -122,7 +122,7 @@ class ClustBERT(nn.Module):
         print("Finished Step 1 --- Clustering in %0.3fs" % (time() - t0))
         return data, dic
 
-    def get_sentence_embedding(self, device, texts):
+    def get_sentence_embeddings(self, device, texts):
         if self.pooling is "cls":
             return self.get_sentence_vectors_with_cls_token(device, texts)
         else:
@@ -162,6 +162,7 @@ class ClustBERT(nn.Module):
             # we only want the hidden_states
             y = out.last_hidden_state
             y = torch.mean(y, 1)
+            y = y.squeeze(0)
             return y
 
     def get_sentence_vector_with_cls_token(self, device, tokens: Tensor, token_type_ids=None, attention_mask=None):
