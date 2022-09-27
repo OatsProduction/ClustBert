@@ -159,11 +159,21 @@ class ClustBERT(nn.Module):
                                   token_type_ids=token_type_ids,
                                   attention_mask=attention_mask)
 
+            token_embeddings = out.last_hidden_state
+            input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+            sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
+
+            sum_mask = input_mask_expanded.sum(1)
+            sum_mask = torch.clamp(sum_mask, min=1e-9)
+
+            output_vectors = sum_embeddings / sum_mask
+            return output_vectors
+
             # we only want the hidden_states
-            y = out.last_hidden_state
-            y = torch.mean(y, 1)
-            y = y.squeeze(0)
-            return y
+            # y = out.last_hidden_state
+            # y = torch.mean(y, 1)
+            # y = y.squeeze(0)
+            # return y
 
     def get_sentence_vector_with_cls_token(self, device, tokens: Tensor, token_type_ids=None, attention_mask=None):
         with torch.no_grad():
