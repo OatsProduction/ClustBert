@@ -18,7 +18,7 @@ def batcher(params, batch):
 
     with torch.no_grad():
         y = params['tokenizer'](sentences, padding=True, truncation=True, return_tensors="pt")
-        y = params['model'].get_sentence_vectors_with_cls_token(params["device"], [y.data])
+        y = params['model'].get_sentence_embedding(params["device"], [y.data])
     return y[0]
 
 

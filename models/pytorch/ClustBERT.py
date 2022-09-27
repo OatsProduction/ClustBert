@@ -1,3 +1,4 @@
+import logging
 import os
 import pickle
 import random
@@ -5,11 +6,8 @@ from datetime import datetime
 from time import time
 from typing import Tuple
 
-import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
-import umap
-import umap.plot
 from datasets import Dataset
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics import silhouette_score
@@ -21,10 +19,16 @@ from transformers.modeling_utils import no_init_weights
 
 from training.PlainPytorchTraining import generate_clustering_statistic
 
+logging.getLogger('matplotlib.pyplot').setLevel(logging.CRITICAL)
+logging.getLogger('numba').setLevel(logging.CRITICAL)
+import matplotlib.pyplot as plt
+import umap
+import umap.plot
+
 
 class ClustBERT(nn.Module):
 
-    def __init__(self, k: int, state="random"):
+    def __init__(self, k: int, state="random", pooling="cls"):
         super(ClustBERT, self).__init__()
         if state is "random":
             no_init_weights(True)
@@ -39,6 +43,7 @@ class ClustBERT(nn.Module):
 
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
         self.loss = nn.CrossEntropyLoss()
+        self.pooling = pooling
 
         self.num_labels = k
         self.dropout = nn.Dropout(0.1)
@@ -86,7 +91,7 @@ class ClustBERT(nn.Module):
         self.model.eval()
 
         print("Creating sentence embeddings")
-        sentence_embedding = self.get_sentence_vectors_with_cls_token(device, data)
+        sentence_embedding = self.get_sentence_embedding(device, data)
         X = [sentence.cpu().detach().numpy() for sentence in sentence_embedding]
 
         pseudo_labels = self.clustering.fit_predict(X)
@@ -117,6 +122,12 @@ class ClustBERT(nn.Module):
         print("Finished Step 1 --- Clustering in %0.3fs" % (time() - t0))
         return data, dic
 
+    def get_sentence_embedding(self, device, texts):
+        if self.pooling is "cls":
+            return self.get_sentence_vectors_with_cls_token(device, texts)
+        else:
+            return self.get_sentence_vectors_with_token_average(device, texts)
+
     def get_sentence_vectors_with_cls_token(self, device, texts: Dataset):
         lists = []
         for text in tqdm(texts):
@@ -126,17 +137,30 @@ class ClustBERT(nn.Module):
         return lists
 
     def get_sentence_vectors_with_token_average(self, device, texts: Dataset):
-        return [self.get_sentence_vector_with_token_average(device, text["input_ids"], text['token_type_ids'],
-                                                            text['attention_mask']) for text in texts]
+        lists = []
+        for text in tqdm(texts):
+            embedding = self.get_sentence_vector_with_token_average(device, text["input_ids"], text['token_type_ids'],
+                                                                    text['attention_mask'])
+            lists.append(embedding.cpu().detach())
+        return lists
 
     def get_sentence_vector_with_token_average(self, device, tokens: Tensor, token_type_ids=None, attention_mask=None):
         with torch.no_grad():
-            out = self.model(input_ids=tokens.unsqueeze(0).to(device=device),
-                             token_type_ids=token_type_ids.unsqueeze(0).to(device=device),
-                             attention_mask=attention_mask.unsqueeze(0).to(device=device))
+            if len(tokens.shape) is 1:
+                tokens = tokens.unsqueeze(0)
+                token_type_ids = token_type_ids.unsqueeze(0)
+                attention_mask = attention_mask.unsqueeze(0)
+
+        input_ids = tokens.to(device=device)
+        token_type_ids = token_type_ids.to(device=device)
+        attention_mask = attention_mask.to(device=device)
+
+        out = self.model.bert(input_ids=input_ids,
+                              token_type_ids=token_type_ids,
+                              attention_mask=attention_mask)
 
         # we only want the hidden_states
-        hidden_states = out[2]
+        hidden_states = out.last_hidden_state
         return torch.mean(hidden_states[-1], dim=1).squeeze()
 
     def get_sentence_vector_with_cls_token(self, device, tokens: Tensor, token_type_ids=None, attention_mask=None):

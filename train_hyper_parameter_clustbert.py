@@ -22,15 +22,16 @@ def start_train(config=None):
         wandb.run.name = "_lr" + str(config.learning_rate) + "_k" + str(
             config.k) + "_epoch" + str(config.epochs) + "_" + wandb.run.id
 
-    device = torch.device("cuda:1")
+    device = torch.device("cuda:0")
     torch.cuda.empty_cache()
 
-    clust_bert = ClustBERT(config.k, "seq")
+    clust_bert = ClustBERT(config.k, state="seq", pooling="average")
     clust_bert.to(device)
     if not args.wandb:
         wandb.watch(clust_bert)
 
     big_train_dataset = DataSetUtils.get_imdb().shuffle(seed=525)
+    table = None
 
     if not args.wandb:
         columns = ["Epoch", "Texts", "Cluster"]
@@ -93,7 +94,8 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--senteval_path", type=str, help="Nots about the training run")
     parser.add_argument("-w", "--wandb", action="store_true", help="Should start the program with Weights & Biases.")
 
-    logging.disable(logging.INFO)  # disable INFO and DEBUG logger everywhere
+    logger = logging.getLogger(__name__)
+    logging.disable(logging.DEBUG)  # disable INFO and DEBUG logger everywhere
 
     args = parser.parse_args()
     start_train(args)
