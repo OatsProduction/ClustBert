@@ -151,17 +151,18 @@ class ClustBERT(nn.Module):
                 token_type_ids = token_type_ids.unsqueeze(0)
                 attention_mask = attention_mask.unsqueeze(0)
 
-        input_ids = tokens.to(device=device)
-        token_type_ids = token_type_ids.to(device=device)
-        attention_mask = attention_mask.to(device=device)
+            input_ids = tokens.to(device=device)
+            token_type_ids = token_type_ids.to(device=device)
+            attention_mask = attention_mask.to(device=device)
 
-        out = self.model.bert(input_ids=input_ids,
-                              token_type_ids=token_type_ids,
-                              attention_mask=attention_mask)
+            out = self.model.bert(input_ids=input_ids,
+                                  token_type_ids=token_type_ids,
+                                  attention_mask=attention_mask)
 
-        # we only want the hidden_states
-        hidden_states = out.last_hidden_state
-        return torch.mean(hidden_states[-1], dim=1).squeeze()
+            # we only want the hidden_states
+            y = out.last_hidden_state
+            y = torch.mean(y, 1)
+            return y
 
     def get_sentence_vector_with_cls_token(self, device, tokens: Tensor, token_type_ids=None, attention_mask=None):
         with torch.no_grad():
@@ -170,17 +171,17 @@ class ClustBERT(nn.Module):
                 token_type_ids = token_type_ids.unsqueeze(0)
                 attention_mask = attention_mask.unsqueeze(0)
 
-        input_ids = tokens.to(device=device)
-        token_type_ids = token_type_ids.to(device=device)
-        attention_mask = attention_mask.to(device=device)
+            input_ids = tokens.to(device=device)
+            token_type_ids = token_type_ids.to(device=device)
+            attention_mask = attention_mask.to(device=device)
 
-        out = self.model.bert(input_ids=input_ids,
-                              token_type_ids=token_type_ids,
-                              attention_mask=attention_mask)
+            out = self.model.bert(input_ids=input_ids,
+                                  token_type_ids=token_type_ids,
+                                  attention_mask=attention_mask)
 
-        y = out.pooler_output
-        y = y.squeeze(0)
-        return y
+            y = out.pooler_output
+            y = y.squeeze(0)
+            return y
 
     def save(self):
         date = str(datetime.now())
