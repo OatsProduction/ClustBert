@@ -112,8 +112,7 @@ def alexnet(sobel=False, bn=True, out=1000):
 
 
 def compute_features(dataloader, model, N):
-    if args.verbose:
-        print('Compute features')
+    print('Compute features')
     model.eval()
     # discard the label information in the dataloader
     for i, (input_tensor, _) in enumerate(dataloader):
@@ -158,6 +157,7 @@ if __name__ == '__main__':
 
     embeddings = compute_features(dataloader, alexNet, len(dataset))
 
+    print("Start UMAp")
     standard_embedding = umap.UMAP().fit_transform(embeddings)
     x = standard_embedding[:, 0]
     y = standard_embedding[:, 1]
