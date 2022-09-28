@@ -92,7 +92,7 @@ class ClustBERT(nn.Module):
 
         print("Creating sentence embeddings")
         sentence_embedding = self.get_sentence_embeddings(device, data)
-        X = [sentence.cpu().detach().numpy() for sentence in sentence_embedding]
+        X = [sentence[0].cpu().detach().numpy() for sentence in sentence_embedding]
 
         pseudo_labels = self.clustering.fit_predict(X)
         data = data.map(lambda example, idx: {"labels": pseudo_labels[idx]}, with_indices=True)
