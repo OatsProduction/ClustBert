@@ -9,6 +9,7 @@ matplotlib
 plotly
 datasets
 transformers
+torchvision
 pytorch_lightning
 wandb
 requests
