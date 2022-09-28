@@ -152,7 +152,7 @@ if __name__ == '__main__':
            normalize]
 
     # load the data
-    dataset = load_dataset("imagenet-1k", split="validation")
+    dataset = load_dataset("imagenet-1k", use_auth_token=True, split="validation")
     dataset = dataset.select(range(1, 10000))
     dataloader = DataLoader(dataset, batch_size=8, pin_memory=True)
 
