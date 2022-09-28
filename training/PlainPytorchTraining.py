@@ -20,18 +20,18 @@ def batcher(params, batch):
 
     with torch.no_grad():
         y = params['tokenizer'](sentences, padding=True, truncation=True, return_tensors="pt")
-        y = params['model'].get_sentence_embeddings(params["device"], [y.data])
-    return y[0]
+        y = params['model'].get_sentence_embeddings(params["device"], y.data)
+    return y
 
 
 def train_loop(model, train_dataloader: DataLoader, device, config=None):
     learning_rate = 3e-5 if config is None or config.learning_rate is None else config.learning_rate
 
-    optimizer = AdamW(model.parameters(), lr=learning_rate, eps=1e-8)
+    optimizer = AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-8)
     lr_scheduler = get_scheduler(
         "linear",
         optimizer=optimizer,
-        num_warmup_steps=0,
+        num_warmup_steps=len(train_dataloader) / 10,
         num_training_steps=len(train_dataloader)
     )
 

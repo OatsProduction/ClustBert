@@ -91,8 +91,11 @@ class ClustBERT(nn.Module):
         self.model.eval()
 
         print("Creating sentence embeddings")
-        sentence_embedding = self.get_sentence_embeddings(device, data)
-        X = [sentence[0].cpu().detach().numpy() for sentence in sentence_embedding]
+
+        X = []
+        for text in tqdm(data):
+            embedding = self.get_sentence_embeddings(device, text)
+            X.append(embedding[0].cpu().detach().numpy())
 
         pseudo_labels = self.clustering.fit_predict(X)
         data = data.map(lambda example, idx: {"labels": pseudo_labels[idx]}, with_indices=True)
@@ -122,27 +125,13 @@ class ClustBERT(nn.Module):
         print("Finished Step 1 --- Clustering in %0.3fs" % (time() - t0))
         return data, dic
 
-    def get_sentence_embeddings(self, device, texts):
+    def get_sentence_embeddings(self, device, text):
         if self.pooling is "cls":
-            return self.get_sentence_vectors_with_cls_token(device, texts)
+            return self.get_sentence_vector_with_cls_token(device, text["input_ids"], text['token_type_ids'],
+                                                           text['attention_mask'])
         else:
-            return self.get_sentence_vectors_with_token_average(device, texts)
-
-    def get_sentence_vectors_with_cls_token(self, device, texts: Dataset):
-        lists = []
-        for text in tqdm(texts):
-            embedding = self.get_sentence_vector_with_cls_token(device, text["input_ids"], text['token_type_ids'],
-                                                                text['attention_mask'])
-            lists.append(embedding.cpu().detach())
-        return lists
-
-    def get_sentence_vectors_with_token_average(self, device, texts: Dataset):
-        lists = []
-        for text in tqdm(texts):
-            embedding = self.get_sentence_vector_with_token_average(device, text["input_ids"], text['token_type_ids'],
-                                                                    text['attention_mask'])
-            lists.append(embedding.cpu().detach())
-        return lists
+            return self.get_sentence_vector_with_token_average(device, text["input_ids"], text['token_type_ids'],
+                                                               text['attention_mask'])
 
     def get_sentence_vector_with_token_average(self, device, tokens: Tensor, token_type_ids=None, attention_mask=None):
         with torch.no_grad():
@@ -191,7 +180,6 @@ class ClustBERT(nn.Module):
                                   attention_mask=attention_mask)
 
             y = out.pooler_output
-            y = y.squeeze(0)
             return y
 
     def save(self):
