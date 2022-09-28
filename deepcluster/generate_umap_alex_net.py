@@ -7,8 +7,6 @@ import wandb
 from datasets import load_dataset
 from torch.utils.data import DataLoader
 
-from deepcluster.alexnet import alexnet
-
 logging.getLogger('matplotlib.pyplot').setLevel(logging.CRITICAL)
 logging.getLogger('numba').setLevel(logging.CRITICAL)
 import matplotlib.pyplot as plt
