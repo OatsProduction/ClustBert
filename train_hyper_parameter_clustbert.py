@@ -25,17 +25,20 @@ def start_train(config=None):
     device = torch.device("cuda:0")
     torch.cuda.empty_cache()
 
-    clust_bert = ClustBERT(config.k, state="seq", pooling="average")
+    clust_bert = ClustBERT(config.k, state="bert", pooling="average")
     clust_bert.to(device)
     if not args.wandb:
         wandb.watch(clust_bert)
 
     big_train_dataset = DataSetUtils.get_imdb().shuffle(seed=525)
+    big_train_dataset = big_train_dataset.select(range(1, 10))
     table = None
+    name = None
 
     if not args.wandb:
         columns = ["Id", "Epoch", "Texts", "Cluster"]
         table = wandb.Table(columns=columns)
+        name = wandb.run.name
         score = eval_loop(clust_bert, device)
         wandb.log({
             "cr_score": score
@@ -47,7 +50,7 @@ def start_train(config=None):
         pre_processed_dataset = DataSetUtils.preprocess_datasets(clust_bert.tokenizer, big_train_dataset)
 
         pseudo_label_data, wandb_dic = clust_bert.cluster_and_generate(pre_processed_dataset, device, table, epoch,
-                                                                       name=wandb.run.name)
+                                                                       name=name)
 
         clust_bert.classifier = None
         clust_bert.classifier = nn.Linear(768, clust_bert.num_labels)

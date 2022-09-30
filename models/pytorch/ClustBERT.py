@@ -17,6 +17,7 @@ from sklearn.metrics.cluster import normalized_mutual_info_score
 from torch import Tensor
 from tqdm import tqdm
 from transformers import BertTokenizer, BertModel, BertConfig, BertForSequenceClassification
+from transformers.modeling_outputs import SequenceClassifierOutput
 from transformers.modeling_utils import no_init_weights
 
 from training.PlainPytorchTraining import generate_clustering_statistic
@@ -32,20 +33,22 @@ class ClustBERT(nn.Module):
 
     def __init__(self, k: int, state="random", pooling="cls"):
         super(ClustBERT, self).__init__()
-        if state is "random":
-            no_init_weights(True)
-            config = BertConfig.from_pretrained("bert-base-cased", output_hidden_states=True)
-            self.model = BertModel(config)
-        elif state is "bert":
-            self.model = BertModel.from_pretrained("bert-base-cased")
-        else:
+        if state is "seq":
             config = BertConfig.from_pretrained("bert-base-cased", num_labels=k,
                                                 problem_type="single_label_classification")
             self.model = BertForSequenceClassification(config=config)
+        elif state is "bert":
+            self.model = BertModel.from_pretrained("bert-base-cased")
+        else:
+            no_init_weights(True)
+            config = BertConfig.from_pretrained("bert-base-cased", output_hidden_states=True)
+            self.model = BertModel(config)
+
+        self.state = state
+        self.pooling = pooling
 
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
         self.loss = nn.CrossEntropyLoss()
-        self.pooling = pooling
 
         self.num_labels = k
         self.dropout = nn.Dropout(0.1)
@@ -57,21 +60,26 @@ class ClustBERT(nn.Module):
         )
 
     def forward(self, input_ids=None, token_type_ids=None, attention_mask=None, labels=None):
-        # Extract outputs from the body
-        return self.model(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask,
-                          labels=labels)
+        if self.state is "seq":
+            return self.model(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask,
+                              labels=labels)
+        else:
+            outputs = self.model(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask)
 
-    #     outputs = self.model(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask)
-    #
-    #     # Add custom layers
-    #     sequence_output = self.dropout(outputs[0])  # outputs[0]=last hidden state
-    #     logits = self.classifier(sequence_output[:, 0, :].view(-1, 768))  # calculate losses
-    #
-    #     loss = None
-    #     if labels is not None:
-    #         loss = self.loss(logits, labels)
-    #
-    #     return logits, loss
+            # Add custom layers
+            sequence_output = self.dropout(outputs[0])  # outputs[0]=last hidden state
+            logits = self.classifier(sequence_output[:, 0, :].view(-1, 768))  # calculate losses
+
+            loss = None
+            if labels is not None:
+                loss = self.loss(logits, labels)
+
+            return SequenceClassifierOutput(
+                loss=loss,
+                logits=logits,
+                hidden_states=outputs.hidden_states,
+                attentions=outputs.attentions,
+            )
 
     def preprocess_datasets(self, data_set: Dataset) -> Dataset:
         print("Preprocess the data")
@@ -95,17 +103,17 @@ class ClustBERT(nn.Module):
 
         print("Creating sentence embeddings")
 
-        X = []
+        X_pre_pca = []
         for text in tqdm(data):
             embedding = self.get_sentence_embeddings(device, text)
-            X.append(embedding[0].cpu().detach().numpy())
+            X_pre_pca.append(embedding[0].cpu().detach().numpy())
 
         pca = PCA(n_components=50)
-        X = pca.fit(X)
-        pseudo_labels = self.clustering.fit_predict(X)
-        data = data.map(lambda example, idx: {"labels": pseudo_labels[idx]}, with_indices=True)
+        X_post_pca = pca.fit_transform(X_pre_pca)
+        pseudo_labels = self.clustering.fit_predict(X_post_pca)
 
-        standard_embedding = umap.UMAP(n_components=2, metric='cosine').fit_transform(X)
+        data = data.map(lambda example, idx: {"labels": pseudo_labels[idx]}, with_indices=True)
+        standard_embedding = umap.UMAP(n_components=2, metric='cosine').fit_transform(X_pre_pca)
 
         indicies = []
         for k in range(self.num_labels):
@@ -125,7 +133,7 @@ class ClustBERT(nn.Module):
         dic = generate_clustering_statistic(data)
         dic["UMAP-Pseudo-Labels"] = plt
         dic["nmi"] = normalized_mutual_info_score(data["original_label"], pseudo_labels)
-        dic["silhouette"] = silhouette_score(X, pseudo_labels)
+        dic["silhouette"] = silhouette_score(X_pre_pca, pseudo_labels)
 
         print("Finished Step 1 --- Clustering in %0.3fs" % (time() - t0))
         return data, dic
@@ -149,9 +157,14 @@ class ClustBERT(nn.Module):
             token_type_ids = token_type_ids.to(device=device)
             attention_mask = attention_mask.to(device=device)
 
-            out = self.model.bert(input_ids=input_ids,
-                                  token_type_ids=token_type_ids,
-                                  attention_mask=attention_mask)
+            if self.state is "seq":
+                out = self.model.bert(input_ids=input_ids,
+                                      token_type_ids=token_type_ids,
+                                      attention_mask=attention_mask)
+            else:
+                out = self.model(input_ids=input_ids,
+                                 token_type_ids=token_type_ids,
+                                 attention_mask=attention_mask)
 
             token_embeddings = out.last_hidden_state
             input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
@@ -162,12 +175,6 @@ class ClustBERT(nn.Module):
 
             output_vectors = sum_embeddings / sum_mask
             return output_vectors
-
-            # we only want the hidden_states
-            # y = out.last_hidden_state
-            # y = torch.mean(y, 1)
-            # y = y.squeeze(0)
-            # return y
 
     def get_sentence_vector_with_cls_token(self, device, tokens: Tensor, token_type_ids=None, attention_mask=None):
         with torch.no_grad():
@@ -180,9 +187,14 @@ class ClustBERT(nn.Module):
             token_type_ids = token_type_ids.to(device=device)
             attention_mask = attention_mask.to(device=device)
 
-            out = self.model.bert(input_ids=input_ids,
-                                  token_type_ids=token_type_ids,
-                                  attention_mask=attention_mask)
+            if self.state is "seq":
+                out = self.model.bert(input_ids=input_ids,
+                                      token_type_ids=token_type_ids,
+                                      attention_mask=attention_mask)
+            else:
+                out = self.model(input_ids=input_ids,
+                                 token_type_ids=token_type_ids,
+                                 attention_mask=attention_mask)
 
             y = out.pooler_output
             return y
