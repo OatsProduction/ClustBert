@@ -7,9 +7,6 @@ from torch.utils.data import DataLoader, Sampler
 from tqdm import tqdm
 from transformers import get_scheduler, BertTokenizer
 
-training_stats = []
-accuracy = 0
-
 
 def prepare(params, samples):
     return
@@ -79,7 +76,6 @@ def generate_clustering_statistic(dataset: Dataset) -> dict:
     return {
         "standard_deviation": standard_deviation,
         "amount_in_max_cluster": amount_in_max_cluster,
-        "under_x_cluster": under_x_cluster,
     }
 
 

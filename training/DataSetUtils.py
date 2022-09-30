@@ -10,12 +10,12 @@ logging.disable(logging.INFO)  # disable INFO and DEBUG logger everywhere
 tuples = [
     None,
     naw.SynonymAug(aug_src='wordnet'),
-    naw.ContextualWordEmbsAug(
-        model_path='distilbert-base-uncased', action="substitute", device="cuda"),
+    # naw.ContextualWordEmbsAug(
+    #     model_path='distilbert-base-uncased', action="substitute", device="cuda"),
     # naw.RandomWordAug(action='crop'),
     # naw.RandomWordAug(),
-    naw.ContextualWordEmbsAug(
-        model_path='roberta-base', action="substitute", device="cuda"),
+    # naw.ContextualWordEmbsAug(
+    #     model_path='roberta-base', action="substitute", device="cuda"),
     naw.ContextualWordEmbsAug(
         model_path='bert-base-uncased', action="insert", device="cuda"),
 ]
@@ -105,8 +105,7 @@ def get_pedia_classes() -> Dataset:
 
 def preprocess_datasets(tokenizer: BertTokenizer, data_set: Dataset) -> Dataset:
     print("Preprocess the data")
-    # new_dataset = data_set.map(augment_dataset, batched=True)
-    new_dataset = data_set
+    new_dataset = data_set.map(augment_dataset, batch_size=10, batched=True)
 
     new_dataset = new_dataset.map(
         lambda data_point: tokenizer(data_point['text'], padding=True, truncation=True),
@@ -122,7 +121,7 @@ def preprocess_datasets(tokenizer: BertTokenizer, data_set: Dataset) -> Dataset:
 
 
 def augment_dataset(data_point) -> Dict[str, Any]:
-    aug = random.choices(tuples, weights=(60, 10, 10, 10, 10), k=1)[0]
+    aug = random.choices(tuples, weights=(60, 10, 10), k=1)[0]
 
     if aug is None:
         return data_point
