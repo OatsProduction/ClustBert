@@ -6,10 +6,12 @@ from datetime import datetime
 from time import time
 from typing import Tuple
 
+import numpy as np
 import torch
 import torch.nn as nn
 from datasets import Dataset
 from sklearn.cluster import MiniBatchKMeans
+from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from torch import Tensor
@@ -81,11 +83,12 @@ class ClustBERT(nn.Module):
         print("Finished the Preprocess the data")
         return data_set
 
-    def cluster_and_generate(self, data: Dataset, device, table, epoch: int) -> Tuple[Dataset, dict]:
+    def cluster_and_generate(self, data: Dataset, device, table, epoch: int, name="None") -> Tuple[Dataset, dict]:
         print("Start Step 1 --- Clustering")
         t0 = time()
         self.clustering = MiniBatchKMeans(
             self.num_labels,
+            random_state=np.random.randint(1234),
             batch_size=self.kmeans_batch_size,
         )
         self.model.eval()
@@ -97,10 +100,12 @@ class ClustBERT(nn.Module):
             embedding = self.get_sentence_embeddings(device, text)
             X.append(embedding[0].cpu().detach().numpy())
 
+        pca = PCA(n_components=50)
+        X = pca.fit(X)
         pseudo_labels = self.clustering.fit_predict(X)
         data = data.map(lambda example, idx: {"labels": pseudo_labels[idx]}, with_indices=True)
 
-        standard_embedding = umap.UMAP().fit_transform(X)
+        standard_embedding = umap.UMAP(n_components=2, metric='cosine').fit_transform(X)
 
         indicies = []
         for k in range(self.num_labels):
@@ -115,7 +120,7 @@ class ClustBERT(nn.Module):
             if table is not None:
                 results = data.select(idx_list)["text"]
                 results = random.choices(results, k=5)
-                table.add_data(str(epoch), results, str(idx))
+                table.add_data(name, str(epoch), results, str(idx))
 
         dic = generate_clustering_statistic(data)
         dic["UMAP-Pseudo-Labels"] = plt

@@ -34,9 +34,8 @@ def start_train(config=None):
     table = None
 
     if not args.wandb:
-        columns = ["Epoch", "Texts", "Cluster"]
+        columns = ["Id", "Epoch", "Texts", "Cluster"]
         table = wandb.Table(columns=columns)
-
         score = eval_loop(clust_bert, device)
         wandb.log({
             "cr_score": score
@@ -47,7 +46,8 @@ def start_train(config=None):
         big_train_dataset = big_train_dataset.shuffle(seed=epoch)
         pre_processed_dataset = DataSetUtils.preprocess_datasets(clust_bert.tokenizer, big_train_dataset)
 
-        pseudo_label_data, wandb_dic = clust_bert.cluster_and_generate(pre_processed_dataset, device, table, epoch)
+        pseudo_label_data, wandb_dic = clust_bert.cluster_and_generate(pre_processed_dataset, device, table, epoch,
+                                                                       name=wandb.run.name)
 
         clust_bert.classifier = None
         clust_bert.classifier = nn.Linear(768, clust_bert.num_labels)
