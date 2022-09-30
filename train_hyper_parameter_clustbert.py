@@ -31,7 +31,6 @@ def start_train(config=None):
         wandb.watch(clust_bert)
 
     big_train_dataset = DataSetUtils.get_imdb().shuffle(seed=525)
-    big_train_dataset = big_train_dataset.select(range(1, 10))
     table = None
     name = None
 
