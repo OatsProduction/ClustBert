@@ -4,13 +4,12 @@ import logging
 import numpy as np
 import torch
 import torchvision.transforms as transforms
-import wandb
+from datasets import Dataset
 from datasets import load_dataset
-from pyarrow._dataset import Dataset
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from deepcluster.alexnet import AlexNet
+from deepcluster.alexnet import init_alexnet
 from models.pytorch.ClustBERT import ClustBERT
 from training import DataSetUtils
 
@@ -24,9 +23,9 @@ def compute_features(dataloader, model, N):
     print('Compute features')
     model.eval()
     # discard the label information in the dataloader
-    for i, (input_tensor, _) in enumerate(dataloader):
-        input_var = torch.autograd.Variable(input_tensor.cuda(), volatile=True)
-        aux = model(input_var).data.cpu().numpy()
+    for i, batch in enumerate(dataloader):
+        batch = {k: v for k, v in batch.items()}
+        aux = model(batch).data.cpu().numpy()
 
         if i == 0:
             features = np.zeros((N, aux.shape[1]), dtype='float32')
@@ -42,7 +41,7 @@ def compute_features(dataloader, model, N):
 
 
 def generate_alexnet_embeddings(dataset: Dataset):
-    alexnet = AlexNet(100, 10, None)
+    alexnet = init_alexnet()
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
     tra = [transforms.Resize(256),
@@ -50,8 +49,19 @@ def generate_alexnet_embeddings(dataset: Dataset):
            transforms.ToTensor(),
            normalize]
 
-    dataloader = DataLoader(dataset, batch_size=8, pin_memory=True)
+    dataset = dataset.map(pre_process, load_from_cache_file=False)
+    dataset.set_format("torch", columns=['img'])
+
+    dataloader = DataLoader(dataset, batch_size=2, pin_memory=True)
+
     return compute_features(dataloader, alexnet, len(dataset))
+
+
+def pre_process(data_point):
+    # data_point["img"] = transforms.Resize(256)(data_point['img'])
+    data_point["img"] = transforms.ToTensor()(data_point['img'])
+
+    return data_point
 
 
 def generate_bert_embeddings(dataset: Dataset):
@@ -73,12 +83,12 @@ if __name__ == '__main__':
     parser.add_argument('--device', type=str, help='the index of the cuda GPU. Default is 0')
     args = parser.parse_args()
 
-    wandb.init(project="ClustBert")
+    # wandb.init(project="ClustBert")
 
-    dataset = DataSetUtils.get_million_headlines().shuffle(seed=525)
+    dataset = load_dataset("cifar10")
+    dataset = dataset["train"]
     dataset = dataset.select(range(1, 2000))
-
-    X = generate_bert_embeddings(dataset)
+    X = generate_alexnet_embeddings(dataset)
 
     standard_embedding = umap.UMAP().fit_transform(X)
     x = standard_embedding[:, 0]

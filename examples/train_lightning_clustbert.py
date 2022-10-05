@@ -1,12 +1,12 @@
 import argparse
 
 import pytorch_lightning as pl
+from models.lightning.LightningClustBERT import LightningClustBERT
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 from torch.utils.data import DataLoader
 from transformers import DataCollatorWithPadding
 
-from models.lightning.LightningClustBERT import LightningClustBERT
 from training import DataSetUtils
 
 if __name__ == '__main__':
