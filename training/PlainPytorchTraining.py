@@ -2,10 +2,9 @@ import numpy as np
 import senteval
 import torch
 from datasets import Dataset
-from torch.optim import AdamW
 from torch.utils.data import DataLoader, Sampler
 from tqdm import tqdm
-from transformers import get_scheduler, BertTokenizer
+from transformers import BertTokenizer
 
 
 def prepare(params, samples):
@@ -24,12 +23,12 @@ def batcher(params, batch):
 def train_loop(model, train_dataloader: DataLoader, device, config=None):
     learning_rate = 3e-5 if config is None or config.learning_rate is None else config.learning_rate
 
-    optimizer = AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-8)
-    lr_scheduler = get_scheduler(
-        "linear",
-        optimizer=optimizer,
-        num_warmup_steps=len(train_dataloader) / 10,
-        num_training_steps=len(train_dataloader)
+    # optimizer = AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-8)
+    optimizer = torch.optim.SGD(
+        model.parameters(),
+        lr=learning_rate,
+        momentum=0.9,
+        weight_decay=1e-8
     )
 
     model.train()
@@ -54,7 +53,7 @@ def train_loop(model, train_dataloader: DataLoader, device, config=None):
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         loss.backward()
         optimizer.step()
-        lr_scheduler.step()
+        # lr_scheduler.step()
         optimizer.zero_grad()
 
     return total_train_loss / len(train_dataloader)
