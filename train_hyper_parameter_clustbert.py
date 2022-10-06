@@ -16,7 +16,7 @@ from training.PlainPytorchTraining import train_loop, eval_loop, UnifLabelSample
 
 def start_train(config=None):
     bert_model = "random"
-    device = torch.device("cuda:0")
+    device = torch.device("cuda:2")
     torch.cuda.empty_cache()
 
     clust_bert = ClustBERT(config.k, state=bert_model, pooling="average")
