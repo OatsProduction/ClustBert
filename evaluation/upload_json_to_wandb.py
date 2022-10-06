@@ -2,7 +2,7 @@ import json
 
 import wandb
 
-from evaluation.evaluate_model import sts, senteval_tasks
+from evaluate_model import sts, senteval_tasks
 from evaluation.print_evaluation import get_sts_from_json, get_senteval_from_json
 
 if __name__ == '__main__':

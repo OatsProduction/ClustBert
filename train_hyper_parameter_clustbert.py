@@ -7,7 +7,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from transformers import DataCollatorWithPadding
 
-from evaluation.evaluate_model import evaluate_model, sts, senteval_tasks
+from evaluate_model import evaluate_model, sts, senteval_tasks
 from evaluation.print_evaluation import get_senteval_from_json, get_sts_from_json
 from models.pytorch.ClustBERT import ClustBERT
 from training import DataSetUtils
