@@ -108,7 +108,7 @@ class ClustBERT(nn.Module):
             embedding = self.get_sentence_embeddings(device, text)
             X_pre_pca.append(embedding[0].cpu().detach().numpy())
 
-        pca = PCA(n_components=50)
+        pca = PCA(n_components=200)
         X_post_pca = pca.fit_transform(X_pre_pca)
         pseudo_labels = self.clustering.fit_predict(X_post_pca)
 

@@ -22,10 +22,10 @@ def start_train(config=None):
         wandb.run.name = "_lr" + str(config.learning_rate) + "_k" + str(
             config.k) + "_epoch" + str(config.epochs) + "_" + wandb.run.id
 
-    device = torch.device("cuda:0")
+    device = torch.device("cuda:1")
     torch.cuda.empty_cache()
 
-    clust_bert = ClustBERT(config.k, state="bert", pooling="average")
+    clust_bert = ClustBERT(config.k, state="random", pooling="average")
     clust_bert.to(device)
     if not args.wandb:
         wandb.watch(clust_bert)
