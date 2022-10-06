@@ -37,7 +37,7 @@ class ClustBERT(nn.Module):
             config = BertConfig.from_pretrained("bert-base-cased", num_labels=k,
                                                 problem_type="single_label_classification")
             self.model = BertForSequenceClassification(config=config)
-        elif state is "bert":
+        elif state is "base":
             self.model = BertModel.from_pretrained("bert-base-cased")
         else:
             no_init_weights(True)

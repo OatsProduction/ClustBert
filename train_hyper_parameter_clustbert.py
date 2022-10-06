@@ -15,22 +15,23 @@ from training.PlainPytorchTraining import train_loop, eval_loop, UnifLabelSample
 
 
 def start_train(config=None):
+    bert_model = "random"
+    device = torch.device("cuda:0")
+    torch.cuda.empty_cache()
+
+    clust_bert = ClustBERT(config.k, state=bert_model, pooling="average")
+    clust_bert.to(device)
+
     if not args.wandb:
         wandb.init(config=config)
         wandb.config.update(config)
         config = wandb.config
         wandb.run.name = "_lr" + str(config.learning_rate) + "_k" + str(
-            config.k) + "_epoch" + str(config.epochs) + "_" + wandb.run.id
-
-    device = torch.device("cuda:1")
-    torch.cuda.empty_cache()
-
-    clust_bert = ClustBERT(config.k, state="random", pooling="average")
-    clust_bert.to(device)
-    if not args.wandb:
+            config.k) + "_epoch" + str(config.epochs) + "_bert_" + bert_model + wandb.run.id
         wandb.watch(clust_bert)
 
     big_train_dataset = DataSetUtils.get_imdb().shuffle(seed=525)
+    big_train_dataset = big_train_dataset.select(range(1000))
     table = None
     name = None
 

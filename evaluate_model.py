@@ -69,12 +69,13 @@ if __name__ == '__main__':
 
     wandb.init(config=args)
     config = wandb.config
-    wandb.run.name = "BERT_base_average" + "_" + wandb.run.id
+    bert_type = "random"
+    wandb.run.name = "BERT_" + bert_type + "_average" + "_" + wandb.run.id
 
     device = "cuda:0" if args.device is None else str(args.device)
     print("Started the evaluation script with the device: " + str(device))
 
-    clust_bert = ClustBERT(10, state="bert", pooling="average")
+    clust_bert = ClustBERT(10, state=bert_type, pooling="average")
     clust_bert.to(device)
 
     result = evaluate_model(clust_bert, sts + senteval_tasks, config.senteval_path)
