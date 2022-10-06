@@ -6,7 +6,7 @@ import torch
 import wandb as wandb
 from transformers import BertTokenizer
 
-from evaluation.print_evaluation import get_sts_from_json, get_senteval_from_json
+from .print_evaluation import get_sts_from_json, get_senteval_from_json
 from models.pytorch.ClustBERT import ClustBERT
 
 
