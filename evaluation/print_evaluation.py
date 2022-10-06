@@ -2,8 +2,6 @@ import argparse
 import json
 import os
 
-from evaluation.evaluate_model import sts, senteval_tasks
-
 
 def get_sts_from_json(json) -> list:
     result = []
@@ -34,10 +32,8 @@ if __name__ == '__main__':
             eval_json = json.loads(f.read())
 
             results = get_sts_from_json(eval_json)
-            print(sts)
             print(results)
 
             results = get_senteval_from_json(eval_json)
-            print(senteval_tasks)
             print(results)
             print("----------------------------------------------")
