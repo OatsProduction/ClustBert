@@ -69,8 +69,7 @@ if __name__ == '__main__':
 
     wandb.init(config=args)
     config = wandb.config
-    wandb.run.name = "_lr" + str(config.learning_rate) + "_k" + str(
-        config.k) + "_epoch" + str(config.epochs) + "_" + wandb.run.id
+    wandb.run.name = "BERT_average" + "_" + wandb.run.id
 
     device = "cuda:0" if args.device is None else str(args.device)
     print("Started the evaluation script with the device: " + str(device))
