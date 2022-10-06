@@ -1,12 +1,13 @@
 import argparse
-import json
 import logging
-import pickle
 
 import senteval
 import torch
-from transformers import BertModel, BertTokenizer, BertConfig
-from transformers.modeling_utils import no_init_weights
+import wandb as wandb
+from transformers import BertTokenizer
+
+from evaluation.print_evaluation import get_sts_from_json, get_senteval_from_json
+from models.pytorch.ClustBERT import ClustBERT
 
 
 def prepare(params, samples):
@@ -57,8 +58,6 @@ def evaluate_model(transformer, tasks, senteval_path):
 
 
 if __name__ == '__main__':
-    no_init_weights(True)
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, help="define the path to model to load")
     parser.add_argument("--sts", help="perform all STS", action="store_true")
@@ -68,44 +67,23 @@ if __name__ == '__main__':
     parser.add_argument('--device', type=str, help='the device used by the program. Default is cuda:0')
     args = parser.parse_args()
 
+    wandb.init(config=args)
+    config = wandb.config
+    wandb.run.name = "_lr" + str(config.learning_rate) + "_k" + str(
+        config.k) + "_epoch" + str(config.epochs) + "_" + wandb.run.id
+
     device = "cuda:0" if args.device is None else str(args.device)
     print("Started the evaluation script with the device: " + str(device))
 
-    if args.model == "random":
-        model_name = args.model
-        config = BertConfig.from_pretrained("bert-base-cased", output_hidden_states=True, gradient_checkpointing=False,
-                                            pruned_heads=
-                                            {
-                                                0: list(range(12)),
-                                                1: list(range(12)),
-                                                2: list(range(12)),
-                                                3: list(range(12)),
-                                                4: list(range(12)),
-                                                5: list(range(12)),
-                                                6: list(range(12)),
-                                            })
-        model = BertModel(config)
-        model.eval()
-        for param in model.parameters():
-            param.requires_grad = False
-    elif args.model is not None:
-        model_name = args.model
-        model = pickle.load(open("../output/" + args.model, 'rb'))
-    else:
-        model_name = "plain_bert"
-        model = BertModel.from_pretrained("bert-base-cased", output_hidden_states=True)
+    clust_bert = ClustBERT(10, state="bert", pooling="average")
+    clust_bert.to(device)
 
-    if args.sts:
-        transfer_tasks = sts
-    if args.senteval:
-        transfer_tasks = senteval_tasks
-    if args.all:
-        transfer_tasks = sts + senteval_tasks
-    else:
-        transfer_tasks = ["STS13"]
+    result = evaluate_model(clust_bert, sts + senteval_tasks, config.senteval_path)
 
-    results = evaluate_model(model, transfer_tasks, args.senteval_path)
+    sts_result = [wandb.run.name] + get_sts_from_json(result)
+    my_table = wandb.Table(columns=["Id"] + sts, data=[sts_result])
+    wandb.log({"STS": my_table})
 
-    with open(model_name.replace(".model", "") + '_evaluation_results.json', 'w') as outfile:
-        json_object = json.dumps(results, indent=4)
-        outfile.write(json_object)
+    senteval_result = [wandb.run.name] + get_senteval_from_json(result)
+    my_table = wandb.Table(columns=["Id"] + senteval_tasks, data=[senteval_result])
+    wandb.log({"SentEval": my_table})
