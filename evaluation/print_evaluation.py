@@ -2,6 +2,8 @@ import argparse
 import json
 import os
 
+from evaluate_model import senteval_tasks, sts
+
 
 def get_sts_from_json(json) -> list:
     result = []
