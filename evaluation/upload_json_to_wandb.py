@@ -12,10 +12,10 @@ if __name__ == '__main__':
     result = json.load(f)
     run_name = "l_4_test_me"
 
-    sts_result = [run_name] + get_sts_from_json(result)
+    sts_result = [run_name] + get_sts_from_json(result, sts)
     my_table = wandb.Table(columns=["Id"] + sts, data=[sts_result])
     wandb.log({"STS": my_table})
 
-    senteval_result = [run_name] + get_senteval_from_json(result)
+    senteval_result = [run_name] + get_senteval_from_json(result, senteval_tasks)
     my_table = wandb.Table(columns=["Id"] + senteval_tasks, data=[senteval_result])
     wandb.log({"SentEval": my_table})
