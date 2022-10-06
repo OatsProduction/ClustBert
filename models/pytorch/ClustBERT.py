@@ -16,7 +16,7 @@ from sklearn.metrics import silhouette_score
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from torch import Tensor
 from tqdm import tqdm
-from transformers import BertTokenizer, BertModel, BertConfig, BertForSequenceClassification
+from transformers import BertTokenizer, BertModel, BertConfig
 from transformers.modeling_outputs import SequenceClassifierOutput
 from transformers.modeling_utils import no_init_weights
 
@@ -33,18 +33,13 @@ class ClustBERT(nn.Module):
 
     def __init__(self, k: int, state="random", pooling="cls"):
         super(ClustBERT, self).__init__()
-        if state is "seq":
-            config = BertConfig.from_pretrained("bert-base-cased", num_labels=k,
-                                                problem_type="single_label_classification")
-            self.model = BertForSequenceClassification(config=config)
-        elif state is "base":
+        if state is "base":
             self.model = BertModel.from_pretrained("bert-base-cased")
         else:
             no_init_weights(True)
             config = BertConfig.from_pretrained("bert-base-cased", output_hidden_states=True)
             self.model = BertModel(config)
 
-        self.state = state
         self.pooling = pooling
 
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
@@ -53,33 +48,36 @@ class ClustBERT(nn.Module):
         self.num_labels = k
         self.dropout = nn.Dropout(0.1)
         self.classifier = nn.Linear(768, self.num_labels)  # load and initialize weights
-        self.kmeans_batch_size = 6 * 1024
+        self.kmeans_batch_size = 10 * 1024
         self.clustering = MiniBatchKMeans(
             self.num_labels,
             batch_size=self.kmeans_batch_size,
         )
 
     def forward(self, input_ids=None, token_type_ids=None, attention_mask=None, labels=None):
-        if self.state is "seq":
-            return self.model(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask,
-                              labels=labels)
-        else:
-            outputs = self.model(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask)
+        out = self.model(input_ids=input_ids,
+                         token_type_ids=token_type_ids,
+                         attention_mask=attention_mask)
 
-            # Add custom layers
-            sequence_output = self.dropout(outputs[0])  # outputs[0]=last hidden state
-            logits = self.classifier(sequence_output[:, 0, :].view(-1, 768))  # calculate losses
+        token_embeddings = out.last_hidden_state
+        input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+        sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
 
-            loss = None
-            if labels is not None:
-                loss = self.loss(logits, labels)
+        sum_mask = input_mask_expanded.sum(1)
+        sum_mask = torch.clamp(sum_mask, min=1e-9)
 
-            return SequenceClassifierOutput(
-                loss=loss,
-                logits=logits,
-                hidden_states=outputs.hidden_states,
-                attentions=outputs.attentions,
-            )
+        output_vectors = sum_embeddings / sum_mask
+        output_vectors = self.dropout(output_vectors)
+        logits = self.classifier(output_vectors)  # calculate losses
+
+        loss = None
+        if labels is not None:
+            loss = self.loss(logits, labels)
+
+        return SequenceClassifierOutput(
+            loss=loss,
+            logits=logits,
+        )
 
     def preprocess_datasets(self, data_set: Dataset) -> Dataset:
         print("Preprocess the data")
@@ -99,6 +97,10 @@ class ClustBERT(nn.Module):
             random_state=np.random.randint(1234),
             batch_size=self.kmeans_batch_size,
         )
+        # self.clustering = KMeans(
+        #     n_clusters=self.num_labels,
+        #     random_state=np.random.randint(1234),
+        # )
         self.model.eval()
 
         print("Creating sentence embeddings")
@@ -157,14 +159,9 @@ class ClustBERT(nn.Module):
             token_type_ids = token_type_ids.to(device=device)
             attention_mask = attention_mask.to(device=device)
 
-            if self.state is "seq":
-                out = self.model.bert(input_ids=input_ids,
-                                      token_type_ids=token_type_ids,
-                                      attention_mask=attention_mask)
-            else:
-                out = self.model(input_ids=input_ids,
-                                 token_type_ids=token_type_ids,
-                                 attention_mask=attention_mask)
+            out = self.model(input_ids=input_ids,
+                             token_type_ids=token_type_ids,
+                             attention_mask=attention_mask)
 
             token_embeddings = out.last_hidden_state
             input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
@@ -187,14 +184,9 @@ class ClustBERT(nn.Module):
             token_type_ids = token_type_ids.to(device=device)
             attention_mask = attention_mask.to(device=device)
 
-            if self.state is "seq":
-                out = self.model.bert(input_ids=input_ids,
-                                      token_type_ids=token_type_ids,
-                                      attention_mask=attention_mask)
-            else:
-                out = self.model(input_ids=input_ids,
-                                 token_type_ids=token_type_ids,
-                                 attention_mask=attention_mask)
+            out = self.model(input_ids=input_ids,
+                             token_type_ids=token_type_ids,
+                             attention_mask=attention_mask)
 
             y = out.pooler_output
             return y
