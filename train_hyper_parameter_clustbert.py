@@ -15,7 +15,7 @@ from training.PlainPytorchTraining import train_loop, eval_loop, UnifLabelSample
 
 
 def start_train(config=None):
-    device = torch.device("cuda:1")
+    device = torch.device("cuda:2")
     torch.cuda.empty_cache()
 
     bert_model = "base" if config is None or config.model is None else config.model
