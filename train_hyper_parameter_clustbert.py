@@ -15,7 +15,7 @@ from training.PlainPytorchTraining import train_loop, eval_loop, UnifLabelSample
 
 
 def start_train(config=None):
-    device = torch.device("cuda:2")
+    device = torch.device(config.device)
     torch.cuda.empty_cache()
 
     bert_model = "base" if config is None or config.model is None else config.model
@@ -93,6 +93,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-e", "--epochs", type=int, help="Nots about the training run")
     parser.add_argument("-k", "--k", type=int, help="Nots about the training run")
+    parser.add_argument("-d", "--device", type=str, help="Nots about the training run")
     parser.add_argument("-l", "--learning_rate", type=float, help="Nots about the training run")
     parser.add_argument("-em", "--embedding", type=str, help="Nots about the training run")
     parser.add_argument("-m", "--model", type=str, help="Nots about the training run")
