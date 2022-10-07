@@ -29,7 +29,7 @@ sts = ["STS12", "STS13", "STS14", "STS15", "STS16"]
 senteval_tasks = ["MR", "CR", "SUBJ", "MPQA", "SST2", "SST5", "TREC", "MRPC"]
 
 
-def evaluate_model(transformer, tasks, senteval_path):
+def evaluate_model(transformer, tasks):
     transformer.eval()
     for parameter in transformer.parameters():
         parameter.requires_grad = False
@@ -40,7 +40,7 @@ def evaluate_model(transformer, tasks, senteval_path):
     params = {
         'model': transformer,
         'tokenizer': BertTokenizer.from_pretrained("bert-base-cased"),
-        'task_path': senteval_path,
+        'task_path': "../SentEval/data",
         "device": dev,
         'usepytorch': True,
         'kfold': 10,
@@ -63,7 +63,6 @@ if __name__ == '__main__':
     parser.add_argument("--sts", help="perform all STS", action="store_true")
     parser.add_argument("--senteval", help="perform all SentEval Tests", action="store_true")
     parser.add_argument("--all", help="perform all evaluation Tests", action="store_true")
-    parser.add_argument("--senteval_path", type=str, help="define the path to model to load")
     parser.add_argument('--device', type=str, help='the device used by the program. Default is cuda:0')
     args = parser.parse_args()
 
@@ -78,7 +77,7 @@ if __name__ == '__main__':
     clust_bert = ClustBERT(10, state=bert_type, pooling="average")
     clust_bert.to(device)
 
-    result = evaluate_model(clust_bert, sts + senteval_tasks, config.senteval_path)
+    result = evaluate_model(clust_bert, sts + senteval_tasks)
 
     sts_result = [wandb.run.name] + get_sts_from_json(result, sts)
     my_table = wandb.Table(columns=["Id"] + sts, data=[sts_result])

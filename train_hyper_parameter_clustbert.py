@@ -75,7 +75,7 @@ def start_train(config=None):
             wandb_dic["cr_score"] = score
             wandb.log(wandb_dic)
 
-    result = evaluate_model(clust_bert, sts + senteval_tasks, config.senteval_path)
+    result = evaluate_model(clust_bert, sts + senteval_tasks)
 
     if not args.wandb:
         wandb.log({"Example-Texts": table})
