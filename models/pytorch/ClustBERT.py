@@ -40,6 +40,7 @@ class ClustBERT(nn.Module):
             config = BertConfig.from_pretrained("bert-base-cased", output_hidden_states=True)
             self.model = BertModel(config)
 
+        print("Starting ClustBERT with BERT: " + state + ", Pooling: " + pooling)
         self.pooling = pooling
 
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
@@ -55,20 +56,14 @@ class ClustBERT(nn.Module):
         )
 
     def forward(self, input_ids=None, token_type_ids=None, attention_mask=None, labels=None):
-        out = self.model(input_ids=input_ids,
-                         token_type_ids=token_type_ids,
-                         attention_mask=attention_mask)
 
-        token_embeddings = out.last_hidden_state
-        input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-        sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
+        if self.pooling == "average":
+            output_vector = self.calculate_token_average(input_ids, token_type_ids, attention_mask)
+        else:
+            output_vector = self.calculate_token_cls(input_ids, token_type_ids, attention_mask)
 
-        sum_mask = input_mask_expanded.sum(1)
-        sum_mask = torch.clamp(sum_mask, min=1e-9)
-
-        output_vectors = sum_embeddings / sum_mask
-        output_vectors = self.dropout(output_vectors)
-        logits = self.classifier(output_vectors)  # calculate losses
+        output_vectors = self.dropout(output_vector)
+        logits = self.classifier(output_vectors)
 
         loss = None
         if labels is not None:
@@ -159,19 +154,22 @@ class ClustBERT(nn.Module):
             token_type_ids = token_type_ids.to(device=device)
             attention_mask = attention_mask.to(device=device)
 
-            out = self.model(input_ids=input_ids,
-                             token_type_ids=token_type_ids,
-                             attention_mask=attention_mask)
+            return self.calculate_token_average(input_ids, token_type_ids, attention_mask)
 
-            token_embeddings = out.last_hidden_state
-            input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-            sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
+    def calculate_token_average(self, input_ids=None, token_type_ids=None, attention_mask=None):
+        out = self.model(input_ids=input_ids,
+                         token_type_ids=token_type_ids,
+                         attention_mask=attention_mask)
 
-            sum_mask = input_mask_expanded.sum(1)
-            sum_mask = torch.clamp(sum_mask, min=1e-9)
+        token_embeddings = out.last_hidden_state
+        input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+        sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
 
-            output_vectors = sum_embeddings / sum_mask
-            return output_vectors
+        sum_mask = input_mask_expanded.sum(1)
+        sum_mask = torch.clamp(sum_mask, min=1e-9)
+
+        output_vectors = sum_embeddings / sum_mask
+        return output_vectors
 
     def get_sentence_vector_with_cls_token(self, device, tokens: Tensor, token_type_ids=None, attention_mask=None):
         with torch.no_grad():
@@ -184,12 +182,15 @@ class ClustBERT(nn.Module):
             token_type_ids = token_type_ids.to(device=device)
             attention_mask = attention_mask.to(device=device)
 
-            out = self.model(input_ids=input_ids,
-                             token_type_ids=token_type_ids,
-                             attention_mask=attention_mask)
+            return self.calculate_token_cls(input_ids, token_type_ids, attention_mask)
 
-            y = out.pooler_output
-            return y
+    def calculate_token_cls(self, input_ids=None, token_type_ids=None, attention_mask=None):
+        out = self.model(input_ids=input_ids,
+                         token_type_ids=token_type_ids,
+                         attention_mask=attention_mask)
+
+        y = out.pooler_output
+        return y
 
     def save(self):
         date = str(datetime.now())

@@ -50,7 +50,6 @@ def train_loop(model, train_dataloader: DataLoader, device, config=None):
         loss = outputs.loss
         total_train_loss += loss.item()
 
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         loss.backward()
         optimizer.step()
         # lr_scheduler.step()

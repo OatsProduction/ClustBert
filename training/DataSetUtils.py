@@ -10,8 +10,8 @@ logging.disable(logging.INFO)  # disable INFO and DEBUG logger everywhere
 tuples = [
     None,
     naw.SynonymAug(aug_src='wordnet'),
-    # naw.ContextualWordEmbsAug(
-    #     model_path='distilbert-base-uncased', action="substitute", device="cuda"),
+    naw.ContextualWordEmbsAug(
+        model_path='distilbert-base-uncased', action="substitute", device="cuda"),
     # naw.RandomWordAug(action='crop'),
     # naw.RandomWordAug(),
     # naw.ContextualWordEmbsAug(
@@ -41,10 +41,17 @@ def get_snli_dataset() -> Union:
 
 def get_million_headlines() -> Dataset:
     dataset = load_dataset("DeveloperOats/Million_News_Headlines")
-    dataset = dataset.select(range(1, 100000))
     dataset = dataset.rename_column("headline_text", "text")
     dataset = dataset.remove_columns("publish_date")
     dataset = dataset["train"]
+
+    return dataset
+
+
+def get_tec() -> Dataset:
+    dataset = load_dataset("trec")
+    dataset = dataset["train"]
+    dataset = dataset.rename_column("label-fine", "original_label")
 
     return dataset
 
@@ -121,7 +128,7 @@ def preprocess_datasets(tokenizer: BertTokenizer, new_dataset: Dataset) -> Datas
 
 
 def augment_dataset(data_point) -> Dict[str, Any]:
-    aug = random.choices(tuples, weights=(60, 10, 10), k=1)[0]
+    aug = random.choices(tuples, weights=(60, 10, 10, 10), k=1)[0]
 
     if aug is None:
         return data_point

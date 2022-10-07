@@ -15,11 +15,12 @@ from training.PlainPytorchTraining import train_loop, eval_loop, UnifLabelSample
 
 
 def start_train(config=None):
-    bert_model = "random"
-    device = torch.device("cuda:2")
+    device = torch.device("cuda:0")
     torch.cuda.empty_cache()
 
-    clust_bert = ClustBERT(config.k, state=bert_model, pooling="average")
+    bert_model = "base" if config is None or config.model is None else config.model
+    bert_embedding = "average" if config is None or config.embedding is None else config.embedding
+    clust_bert = ClustBERT(config.k, state=bert_model, pooling=bert_embedding)
     clust_bert.to(device)
 
     if not args.wandb:
@@ -27,10 +28,10 @@ def start_train(config=None):
         wandb.config.update(config)
         config = wandb.config
         wandb.run.name = "_lr" + str(config.learning_rate) + "_k" + str(
-            config.k) + "_epoch" + str(config.epochs) + "_bert_" + bert_model + wandb.run.id
+            config.k) + "_epoch" + str(config.epochs) + "_bert_" + bert_model + "_" + wandb.run.id
         wandb.watch(clust_bert)
 
-    big_train_dataset = DataSetUtils.get_imdb().shuffle(seed=525)
+    big_train_dataset = DataSetUtils.get_tec().shuffle(seed=525)
     table = None
     name = None
 
@@ -93,7 +94,8 @@ if __name__ == '__main__':
     parser.add_argument("-e", "--epochs", type=int, help="Nots about the training run")
     parser.add_argument("-k", "--k", type=int, help="Nots about the training run")
     parser.add_argument("-l", "--learning_rate", type=float, help="Nots about the training run")
-    parser.add_argument("-s", "--senteval_path", type=str, help="Nots about the training run")
+    parser.add_argument("-em", "--embedding", type=str, help="Nots about the training run")
+    parser.add_argument("-m", "--model", type=str, help="Nots about the training run")
     parser.add_argument("-w", "--wandb", action="store_true", help="Should start the program with Weights & Biases.")
 
     logger = logging.getLogger(__name__)
