@@ -34,6 +34,7 @@ class ClustBERT(nn.Module):
     def __init__(self, k: int, state="random", pooling="cls"):
         super(ClustBERT, self).__init__()
         if state is "base":
+            no_init_weights(False)
             self.model = BertModel.from_pretrained("bert-base-cased")
         else:
             no_init_weights(True)
