@@ -1,5 +1,6 @@
 import argparse
 import logging
+import sys
 
 import torch
 import wandb
@@ -23,19 +24,20 @@ def start_train(config=None):
     clust_bert = ClustBERT(config.k, state=bert_model, pooling=bert_embedding)
     clust_bert.to(device)
 
-    if not args.wandb:
+    if not config.wandb:
         wandb.init(config=config)
         wandb.config.update(config)
         config = wandb.config
-        wandb.run.name = "_lr" + str(config.learning_rate) + "_k" + str(
-            config.k) + "_epoch" + str(config.epochs) + "_bert_" + bert_model + "_" + wandb.run.id
+        wandb.run.name = "lr" + str(config.learning_rate) + "_k" + str(config.k) + \
+                         "_epoch" + str(config.epochs) + "_bert_" + bert_model + \
+                         "_embedding_" + bert_embedding + "_" + wandb.run.id
         wandb.watch(clust_bert)
 
     big_train_dataset = DataSetUtils.get_tec().shuffle(seed=525)
     table = None
     name = None
 
-    if not args.wandb:
+    if not config.wandb:
         columns = ["Id", "Epoch", "Texts", "Cluster"]
         table = wandb.Table(columns=columns)
         name = wandb.run.name
@@ -70,14 +72,14 @@ def start_train(config=None):
         loss = train_loop(clust_bert, train_dataloader, device, config)
         score = eval_loop(clust_bert, device)
 
-        if not args.wandb:
+        if not config.wandb:
             wandb_dic["loss"] = loss
             wandb_dic["cr_score"] = score
             wandb.log(wandb_dic)
 
     result = evaluate_model(clust_bert, sts + senteval_tasks)
 
-    if not args.wandb:
+    if not config.wandb:
         wandb.log({"Example-Texts": table})
 
         sts_result = [wandb.run.name] + get_sts_from_json(result, sts)
@@ -102,5 +104,8 @@ if __name__ == '__main__':
     logger = logging.getLogger(__name__)
     logging.disable(logging.DEBUG)  # disable INFO and DEBUG logger everywhere
 
-    args = parser.parse_args()
-    start_train(args)
+    testme = torch.cuda.current_device()
+    print("cuda:" + str(testme))
+    sys.exit()
+    # args = parser.parse_args()
+    # start_train(args)
