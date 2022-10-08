@@ -18,7 +18,6 @@ from torch import Tensor
 from tqdm import tqdm
 from transformers import BertTokenizer, BertModel, BertConfig
 from transformers.modeling_outputs import SequenceClassifierOutput
-from transformers.modeling_utils import no_init_weights
 
 from training.PlainPytorchTraining import generate_clustering_statistic
 
@@ -34,10 +33,8 @@ class ClustBERT(nn.Module):
     def __init__(self, k: int, state="random", pooling="cls"):
         super(ClustBERT, self).__init__()
         if state is "base":
-            no_init_weights(False)
             self.model = BertModel.from_pretrained("bert-base-cased")
         else:
-            no_init_weights(True)
             config = BertConfig.from_pretrained("bert-base-cased", output_hidden_states=True)
             self.model = BertModel(config)
 
