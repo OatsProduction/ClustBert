@@ -106,6 +106,9 @@ if __name__ == '__main__':
 
     testme = torch.cuda.current_device()
     print("cuda:" + str(testme))
+
+    count = torch.cuda.device_count()
+    print("amount of gpus: " + str(count))
     sys.exit()
     # args = parser.parse_args()
     # start_train(args)
