@@ -1,6 +1,5 @@
 import argparse
 import logging
-import sys
 
 import torch
 import wandb
@@ -95,7 +94,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-e", "--epochs", type=int, help="Nots about the training run")
     parser.add_argument("-k", "--k", type=int, help="Nots about the training run")
-    parser.add_argument("-d", "--device", type=str, help="Nots about the training run")
+    parser.add_argument("-d", "--device", type=str, default="cuda", help="Nots about the training run")
     parser.add_argument("-l", "--learning_rate", type=float, help="Nots about the training run")
     parser.add_argument("-em", "--embedding", type=str, help="Nots about the training run")
     parser.add_argument("-m", "--model", type=str, help="Nots about the training run")
@@ -104,11 +103,5 @@ if __name__ == '__main__':
     logger = logging.getLogger(__name__)
     logging.disable(logging.DEBUG)  # disable INFO and DEBUG logger everywhere
 
-    testme = device = torch.device("cuda")
-    print("cuda:" + str(testme))
-
-    count = torch.cuda.device_count()
-    print("amount of gpus: " + str(count))
-    sys.exit()
-    # args = parser.parse_args()
-    # start_train(args)
+    args = parser.parse_args()
+    start_train(args)
