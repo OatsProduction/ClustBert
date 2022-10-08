@@ -18,7 +18,6 @@ from torch import Tensor
 from tqdm import tqdm
 from transformers import BertTokenizer, BertModel, BertConfig
 from transformers.modeling_outputs import SequenceClassifierOutput
-from transformers.modeling_utils import no_init_weights
 
 from training.PlainPytorchTraining import generate_clustering_statistic
 
@@ -33,8 +32,9 @@ class ClustBERT(nn.Module):
 
     def __init__(self, k: int, state="random", pooling="cls"):
         super(ClustBERT, self).__init__()
-        if state is "base":
-            no_init_weights(False)
+        if state == "base":
+            global _init_weights
+            _init_weights = True
             self.model = BertModel.from_pretrained("bert-base-cased")
         else:
             config = BertConfig.from_pretrained("bert-base-cased", output_hidden_states=True)
@@ -136,7 +136,7 @@ class ClustBERT(nn.Module):
         return data, dic
 
     def get_sentence_embeddings(self, device, text):
-        if self.pooling is "cls":
+        if self.pooling == "cls":
             return self.get_sentence_vector_with_cls_token(device, text["input_ids"], text['token_type_ids'],
                                                            text['attention_mask'])
         else:
