@@ -104,7 +104,7 @@ if __name__ == '__main__':
     logger = logging.getLogger(__name__)
     logging.disable(logging.DEBUG)  # disable INFO and DEBUG logger everywhere
 
-    testme = torch.cuda.current_device()
+    testme = device = torch.device("cuda")
     print("cuda:" + str(testme))
 
     count = torch.cuda.device_count()
