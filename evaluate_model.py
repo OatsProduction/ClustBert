@@ -67,10 +67,6 @@ def evaluate_model(transformer, tasks, batcher_method="bert"):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, help="define the path to model to load")
-    parser.add_argument("--sts", help="perform all STS", action="store_true")
-    parser.add_argument("--senteval", help="perform all SentEval Tests", action="store_true")
-    parser.add_argument("--all", help="perform all evaluation Tests", action="store_true")
     parser.add_argument('--device', type=str, help='the device used by the program. Default is cuda:0')
     args = parser.parse_args()
 
