@@ -23,13 +23,18 @@ def batcher(params, batch):
     return y
 
 
+def batcher_random(params, batch):
+    sentences = [" ".join(s).lower() for s in batch]
+    return torch.rand(len(sentences), 512)
+
+
 # Set up logger
 logging.basicConfig(format='%(asctime)s : %(message)s', level=logging.DEBUG)
 sts = ["STS12", "STS13", "STS14", "STS15", "STS16"]
 senteval_tasks = ["MR", "CR", "SUBJ", "MPQA", "SST2", "SST5", "TREC", "MRPC"]
 
 
-def evaluate_model(transformer, tasks):
+def evaluate_model(transformer, tasks, batcher_method="bert"):
     transformer.eval()
     for parameter in transformer.parameters():
         parameter.requires_grad = False
@@ -52,7 +57,10 @@ def evaluate_model(transformer, tasks):
             'epoch_size': 4
         }
     }
-    se = senteval.engine.SE(params, batcher, prepare)
+    if batcher == "bert":
+        se = senteval.engine.SE(params, batcher, prepare)
+    else:
+        se = senteval.engine.SE(params, batcher_random, prepare)
 
     return se.eval(tasks)
 
@@ -77,7 +85,7 @@ if __name__ == '__main__':
     clust_bert = ClustBERT(10, state=bert_type, pooling="average")
     clust_bert.to(device)
 
-    result = evaluate_model(clust_bert, sts + senteval_tasks)
+    result = evaluate_model(clust_bert, sts + senteval_tasks, batcher_method="random")
 
     sts_result = [wandb.run.name] + get_sts_from_json(result, sts)
     my_table = wandb.Table(columns=["Id"] + sts, data=[sts_result])
