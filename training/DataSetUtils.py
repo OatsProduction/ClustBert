@@ -112,7 +112,7 @@ def get_pedia_classes() -> Dataset:
 
 def preprocess_datasets(tokenizer: BertTokenizer, new_dataset: Dataset) -> Dataset:
     print("Preprocess the data")
-    new_dataset = new_dataset.map(augment_dataset, batch_size=100, batched=True, load_from_cache_file=False)
+    new_dataset = new_dataset.map(augment_dataset, batch_size=2, batched=True, load_from_cache_file=False)
 
     new_dataset = new_dataset.map(
         lambda data_point: tokenizer(data_point['text'], padding=True, truncation=True),
@@ -128,7 +128,7 @@ def preprocess_datasets(tokenizer: BertTokenizer, new_dataset: Dataset) -> Datas
 
 
 def augment_dataset(data_point) -> Dict[str, Any]:
-    aug = random.choices(tuples, weights=(60, 10, 10, 10), k=1)[0]
+    aug = random.choices(tuples, weights=(100, 10, 10, 10), k=1)[0]
 
     if aug is None:
         return data_point
