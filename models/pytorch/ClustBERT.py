@@ -108,21 +108,25 @@ class ClustBERT(nn.Module):
         pseudo_labels = self.clustering.fit_predict(X_post_pca)
 
         data = data.map(lambda example, idx: {"labels": pseudo_labels[idx]}, with_indices=True)
-        standard_embedding = umap.UMAP(n_components=2, metric='cosine').fit_transform(X_pre_pca)
 
-        indicies = []
-        for k in range(self.num_labels):
-            results = [idx for idx, t in enumerate(pseudo_labels) if t == k]
-            indicies.append(results)
+        if table is not None:
+            standard_embedding = umap.UMAP(n_components=2, metric='cosine').fit_transform(X_pre_pca)
+            indicies = []
 
-        for idx, idx_list in enumerate(indicies):
-            x = standard_embedding[:, 0][idx_list]
-            y = standard_embedding[:, 1][idx_list]
-            plt.plot(x, y, 'o', label=str(idx))
+            for k in range(self.num_labels):
+                results = [idx for idx, t in enumerate(pseudo_labels) if t == k]
+                indicies.append(results)
 
-            if table is not None:
+            for idx, idx_list in enumerate(indicies):
+                x = standard_embedding[:, 0][idx_list]
+                y = standard_embedding[:, 1][idx_list]
+                plt.plot(x, y, 'o', label=str(idx))
+
                 results = data.select(idx_list)["text"]
-                results = random.choices(results, k=5)
+                example_amount = 5
+                if len(results) < 5:
+                    example_amount = len(results)
+                results = random.choices(results, k=example_amount)
                 table.add_data(name, str(epoch), results, str(idx))
 
         dic = generate_clustering_statistic(data)

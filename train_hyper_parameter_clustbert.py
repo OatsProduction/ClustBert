@@ -32,7 +32,13 @@ def start_train(config=None):
                          "_embedding_" + bert_embedding + "_" + wandb.run.id
         wandb.watch(clust_bert)
 
-    big_train_dataset = DataSetUtils.get_tec().shuffle(seed=525)
+    if config.dataset == "trec":
+        big_train_dataset = DataSetUtils.get_tec().shuffle(seed=525)
+    elif config.dataset == "imdb":
+        big_train_dataset = DataSetUtils.get_imdb().shuffle(seed=525)
+    else:
+        big_train_dataset = DataSetUtils.get_million_headlines().shuffle(seed=525)
+
     table = None
     name = None
 
@@ -98,6 +104,7 @@ if __name__ == '__main__':
     parser.add_argument("-l", "--learning_rate", type=float, help="Nots about the training run")
     parser.add_argument("-em", "--embedding", type=str, help="Nots about the training run")
     parser.add_argument("-m", "--model", type=str, help="Nots about the training run")
+    parser.add_argument("-ds", "--dataset", type=str, help="Nots about the training run")
     parser.add_argument("-w", "--wandb", action="store_true", help="Should start the program with Weights & Biases.")
 
     logger = logging.getLogger(__name__)
