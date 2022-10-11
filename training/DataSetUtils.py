@@ -9,15 +9,15 @@ from transformers import BertTokenizer
 logging.disable(logging.INFO)  # disable INFO and DEBUG logger everywhere
 tuples = [
     None,
-    naw.SynonymAug(aug_src='wordnet'),
+    naw.SynonymAug(aug_src='wordnet', aug_max=2),
     naw.ContextualWordEmbsAug(
-        model_path='distilbert-base-uncased', action="substitute", device="cuda"),
+        model_path='distilbert-base-uncased', aug_max=2, action="substitute", device="cuda"),
     # naw.RandomWordAug(action='crop'),
     # naw.RandomWordAug(),
     # naw.ContextualWordEmbsAug(
     #     model_path='roberta-base', action="substitute", device="cuda"),
     naw.ContextualWordEmbsAug(
-        model_path='bert-base-uncased', action="insert", device="cuda"),
+        model_path='bert-base-uncased', aug_max=2, action="insert", device="cuda"),
 ]
 
 
