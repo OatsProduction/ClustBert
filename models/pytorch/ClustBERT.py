@@ -90,10 +90,6 @@ class ClustBERT(nn.Module):
             random_state=np.random.randint(1234),
             batch_size=self.kmeans_batch_size,
         )
-        # self.clustering = KMeans(
-        #     n_clusters=self.num_labels,
-        #     random_state=np.random.randint(1234),
-        # )
         self.model.eval()
 
         print("Creating sentence embeddings")
@@ -131,7 +127,8 @@ class ClustBERT(nn.Module):
 
         dic = generate_clustering_statistic(data)
         dic["UMAP-Pseudo-Labels"] = plt
-        dic["nmi"] = normalized_mutual_info_score(data["original_label"], pseudo_labels)
+        if 'original_label' in data:
+            dic["nmi"] = normalized_mutual_info_score(data["original_label"], pseudo_labels)
         dic["silhouette"] = silhouette_score(X_pre_pca, pseudo_labels)
 
         print("Finished Step 1 --- Clustering in %0.3fs" % (time() - t0))

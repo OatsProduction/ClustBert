@@ -34,10 +34,10 @@ def start_train(config=None):
 
     if config.dataset == "trec":
         big_train_dataset = DataSetUtils.get_tec().shuffle(seed=525)
-    elif config.dataset == "news-headlines":
-        big_train_dataset = DataSetUtils.get_million_headlines().shuffle(seed=525)
-    else:
+    elif config.dataset == "imdb":
         big_train_dataset = DataSetUtils.get_imdb().shuffle(seed=525)
+    else:
+        big_train_dataset = DataSetUtils.get_million_headlines().shuffle(seed=525)
 
     table = None
     name = None

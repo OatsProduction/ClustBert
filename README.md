@@ -10,6 +10,10 @@ SentEval download
     cd $PWD/SentEval/data/downstream && bash get_transfer_data.bash > /dev/null 2>&1
     python setup.py install
 
+Multiple sweeps
+
+    CUDA_VISIBLE_DEVICES=0
+
 Nützliche Befehle:
 
 - nvidia-smi

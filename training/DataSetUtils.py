@@ -44,6 +44,7 @@ def get_million_headlines() -> Dataset:
     dataset = dataset.rename_column("headline_text", "text")
     dataset = dataset.remove_columns("publish_date")
     dataset = dataset["train"]
+    dataset = dataset.select(range(1, 100000))
 
     return dataset
 
