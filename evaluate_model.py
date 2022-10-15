@@ -57,7 +57,7 @@ def evaluate_model(transformer, tasks, batcher_method="bert"):
             'epoch_size': 4
         }
     }
-    if batcher == "bert":
+    if batcher_method == "bert":
         se = senteval.engine.SE(params, batcher, prepare)
     else:
         se = senteval.engine.SE(params, batcher_random, prepare)
