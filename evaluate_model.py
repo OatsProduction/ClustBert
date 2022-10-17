@@ -84,7 +84,7 @@ if __name__ == '__main__':
     clust_bert = ClustBERT(10, state=bert_model, pooling=bert_embedding)
     clust_bert.to(device)
 
-    result = evaluate_model(clust_bert, sts + senteval_tasks, batcher_method="random")
+    result = evaluate_model(clust_bert, sts + senteval_tasks)
 
     sts_result = [wandb.run.name] + get_sts_from_json(result, sts)
     my_table = wandb.Table(columns=["Id"] + sts, data=[sts_result])
