@@ -68,17 +68,20 @@ def evaluate_model(transformer, tasks, batcher_method="bert"):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--device', type=str, help='the device used by the program. Default is cuda:0')
+    parser.add_argument("-em", "--embedding", type=str, help="Nots about the training run")
+    parser.add_argument("-m", "--model", type=str, help="Nots about the training run")
     args = parser.parse_args()
 
     wandb.init(config=args)
     config = wandb.config
-    bert_type = "random"
-    wandb.run.name = "BERT_" + bert_type + "_average" + "_" + wandb.run.id
+    bert_model = "base" if config is None or config.model is None else config.model
+    bert_embedding = "average" if config is None or config.embedding is None else config.embedding
+    wandb.run.name = "BERT_" + bert_model + "_" + bert_embedding + "_" + wandb.run.id
 
     device = "cuda:0" if args.device is None else str(args.device)
     print("Started the evaluation script with the device: " + str(device))
 
-    clust_bert = ClustBERT(10, state=bert_type, pooling="average")
+    clust_bert = ClustBERT(10, state=bert_model, pooling=bert_embedding)
     clust_bert.to(device)
 
     result = evaluate_model(clust_bert, sts + senteval_tasks, batcher_method="random")
