@@ -127,7 +127,7 @@ class ClustBERT(nn.Module):
 
         dic = generate_clustering_statistic(data)
         dic["UMAP-Pseudo-Labels"] = plt
-        if 'original_label' in data:
+        if 'original_label' in data.column_names:
             dic["nmi"] = normalized_mutual_info_score(data["original_label"], pseudo_labels)
         dic["silhouette"] = silhouette_score(X_pre_pca, pseudo_labels)
 
