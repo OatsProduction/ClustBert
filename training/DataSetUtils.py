@@ -12,10 +12,6 @@ tuples = [
     naw.SynonymAug(aug_src='wordnet', aug_max=2),
     naw.ContextualWordEmbsAug(
         model_path='distilbert-base-uncased', aug_max=2, action="substitute", device="cuda"),
-    # naw.RandomWordAug(action='crop'),
-    # naw.RandomWordAug(),
-    # naw.ContextualWordEmbsAug(
-    #     model_path='roberta-base', action="substitute", device="cuda"),
     naw.ContextualWordEmbsAug(
         model_path='bert-base-uncased', aug_max=2, action="insert", device="cuda"),
 ]
@@ -44,6 +40,12 @@ def get_million_headlines() -> Dataset:
     dataset = dataset.rename_column("headline_text", "text")
     dataset = dataset.remove_columns("publish_date")
     dataset = dataset["train"]
+
+    return dataset
+
+
+def get_million_headlines_mini() -> Dataset:
+    dataset = get_million_headlines()
     dataset = dataset.select(range(1, 100000))
 
     return dataset

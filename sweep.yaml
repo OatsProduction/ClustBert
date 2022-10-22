@@ -1,7 +1,7 @@
 method: random
 metric:
   goal: maximize
-  name: MR_CR_score
+  name: CR_score
 parameters:
   senteval_path:
     value: ../SentEval/data

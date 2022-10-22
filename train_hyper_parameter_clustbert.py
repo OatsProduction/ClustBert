@@ -63,11 +63,11 @@ def start_train(config=None):
         clust_bert.classifier = nn.Linear(768, clust_bert.num_labels)
         clust_bert.to(device)
 
-        images_lists = [[] for _ in range(clust_bert.num_labels)]
+        texts_lists = [[] for _ in range(clust_bert.num_labels)]
         for i in range(len(pseudo_label_data)):
-            images_lists[int(pseudo_label_data[i]["labels"])].append(i)
+            texts_lists[int(pseudo_label_data[i]["labels"])].append(i)
 
-        sampler = UnifLabelSampler(int(len(pseudo_label_data)), images_lists)
+        sampler = UnifLabelSampler(int(len(pseudo_label_data)), texts_lists)
         data_collator = DataCollatorWithPadding(tokenizer=clust_bert.tokenizer)
 
         train_dataloader = DataLoader(
@@ -83,29 +83,41 @@ def start_train(config=None):
             wandb.log(wandb_dic)
 
     result = evaluate_model(clust_bert, sts + senteval_tasks)
+    sts_result = [wandb.run.name] + get_sts_from_json(result, sts)
+    print("STS - Results")
+    print(sts)
+    print(sts_result)
+
+    senteval_result = [wandb.run.name] + get_senteval_from_json(result, senteval_tasks)
+    print("STS - Results")
+    print(senteval_tasks)
+    print(senteval_result)
 
     if not config.wandb:
-        wandb.log({"Example-Texts": table})
-
-        sts_result = [wandb.run.name] + get_sts_from_json(result, sts)
         my_table = wandb.Table(columns=["Id"] + sts, data=[sts_result])
         wandb.log({"STS": my_table})
 
-        senteval_result = [wandb.run.name] + get_senteval_from_json(result, senteval_tasks)
         my_table = wandb.Table(columns=["Id"] + senteval_tasks, data=[senteval_result])
         wandb.log({"SentEval": my_table})
+
+        wandb.log({"Example-Texts": table})
+
+    if config.save:
+        clust_bert.save()
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-e", "--epochs", type=int, help="Nots about the training run")
-    parser.add_argument("-k", "--k", type=int, help="Nots about the training run")
-    parser.add_argument("-d", "--device", type=str, default="cuda", help="Nots about the training run")
-    parser.add_argument("-l", "--learning_rate", type=float, help="Nots about the training run")
-    parser.add_argument("-em", "--embedding", type=str, help="Nots about the training run")
-    parser.add_argument("-m", "--model", type=str, help="Nots about the training run")
-    parser.add_argument("-ds", "--dataset", type=str, help="Nots about the training run")
-    parser.add_argument("-w", "--wandb", action="store_true", help="Should start the program with Weights & Biases.")
+    parser.add_argument("-e", "--epochs", type=int, help="Define the amount of Epochs to train with.")
+    parser.add_argument("-k", "--k", type=int, help="Define the amount of clusters for the clustering algorithm.")
+    parser.add_argument("-d", "--device", type=str, default="cuda", help="Define the device to use.")
+    parser.add_argument("-l", "--learning_rate", type=float, help="Define the learning rate for the run.")
+    parser.add_argument("-em", "--embedding", type=str, help="Define the pooling to generate sentence embeddings. "
+                                                             "Either cls or average.")
+    parser.add_argument("-m", "--model", type=str, help="Define the BERT model to use. Either base or random.")
+    parser.add_argument("-ds", "--dataset", type=str, help="Define the dataset to use. Either trec, imdb or headlines.")
+    parser.add_argument("-w", "--wandb", action="store_true", help="Should start the program without Weights & Biases.")
+    parser.add_argument("-s", "--save", action="store_true", help="Save the model.")
 
     logger = logging.getLogger(__name__)
     logging.disable(logging.DEBUG)  # disable INFO and DEBUG logger everywhere

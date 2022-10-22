@@ -17,12 +17,10 @@ if __name__ == '__main__':
     parser.add_argument('--device', type=str, help='the index of the cuda GPU. Default is 0')
     args = parser.parse_args()
 
-    # wandb.init(project="ClustBert")
     device = torch.device("cuda:0")
     print("Using device: " + str(device))
     clust_bert = ClustBERT(10, state="seq", pooling="average")
     clust_bert.to(device)
-    # wandb.watch(clust_bert)
 
     dataset = DataSetUtils.get_pedia_classes().shuffle(seed=525)
     dataset = dataset.select(range(1, 20000))
