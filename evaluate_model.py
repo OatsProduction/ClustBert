@@ -68,8 +68,9 @@ def evaluate_model(transformer, tasks, batcher_method="bert"):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--device', type=str, help='the device used by the program. Default is cuda:0')
-    parser.add_argument("-em", "--embedding", type=str, help="Nots about the training run")
-    parser.add_argument("-m", "--model", type=str, help="Nots about the training run")
+    parser.add_argument("-em", "--embedding", type=str,
+                        help="Define the sentence embedding to use. Either cls or average.")
+    parser.add_argument("-m", "--model", type=str, help="Define the BERT model to use. Either base or random.")
     config = parser.parse_args()
 
     wandb.init(config=config)

@@ -73,8 +73,6 @@ if __name__ == '__main__':
     parser.add_argument('--device', type=str, help='the index of the cuda GPU. Default is 0')
     args = parser.parse_args()
 
-    # wandb.init(project="ClustBert")
-
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
     tra = [transforms.Resize(256),

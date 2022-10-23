@@ -1,7 +1,6 @@
 import argparse
 import logging
 
-import torch
 from tqdm import tqdm
 
 from models.pytorch.ClustBERT import ClustBERT
@@ -14,10 +13,10 @@ import umap.plot
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--device', type=str, help='the index of the cuda GPU. Default is 0')
+    parser.add_argument('--device', type=str, help='the device used by the program. Default is cuda:0')
     args = parser.parse_args()
 
-    device = torch.device("cuda:0")
+    device = "cuda:0" if args is None or args.device is None else str(args.device)
     print("Using device: " + str(device))
     clust_bert = ClustBERT(10, state="seq", pooling="average")
     clust_bert.to(device)
